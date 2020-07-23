@@ -6,7 +6,8 @@ app.get("/", function (req, res) {
 });
 
 console.log("This is a test!");
-console.log("This is a test!");
 app.listen(3000, function () {
   console.log("App listening on port 3000!");
 });
+
+console.log("Test");
