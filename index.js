@@ -8,6 +8,8 @@ app.get("/", function (req, res) {
   res.send("Hello WorKn!");
 });
 
-app.listen(3000, function () {
-  console.log("App listening on port 3000!");
+const port = process.env.PORT || 8080;
+
+app.listen(port, function () {
+  console.log("App listening on port " + port);
 });
