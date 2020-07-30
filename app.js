@@ -2,6 +2,9 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
+
 const app = express();
 
 //---Global Middlewares---
@@ -20,6 +23,11 @@ app.get('/', function (req, res) {
 });
 
 //---Error handling---
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server.`, 404));
+});
+
+app.use(globalErrorHandler);
 
 //---App export---
 module.exports = app;

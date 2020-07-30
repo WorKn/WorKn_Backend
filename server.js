@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 const app = require('./app');
+
+//Unhandled Exceptions handling
+process.on('uncaughtException', (err) => {
+  console.log('Unhandled Exception. Shutting dow...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
 const dotenv = require('dotenv');
 dotenv.config({ path: './.env' });
 
@@ -21,11 +29,7 @@ mongoose
     useCreateIndex: true,
     useFindAndModify: false,
   })
-  .then(() => console.log('Database connection successfully established.'))
-  .catch((err) => {
-    console.log(err);
-    console.log('DB connection failed');
-  });
+  .then(() => console.log('Database connection successfully established.'));
 
 //Start server
 const port = process.env.PORT || 8080;
