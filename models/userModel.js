@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const locationSchema = require('./locationSchema');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -52,10 +53,7 @@ const userSchema = new mongoose.Schema({
       'Por favor, seleccione una categoría de interés.',
     ],
   },
-  location: {
-    coordinates: [Number],
-    address: String,
-  },
+  location: locationSchema,
   password: {
     type: String,
     required: [true, 'Por favor, provea una contraseña.'],
@@ -122,7 +120,7 @@ const userSchema = new mongoose.Schema({
     ],
     validate: {
       validator: function (el) {
-        return el.length <= 10;
+        return el.length < 11;
       },
       message: 'Límite de tags (10) excedido.',
     },
