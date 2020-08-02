@@ -16,7 +16,7 @@ let DB = '';
 
 if (process.env.NODE_ENV === 'development') {
   DB = process.env.DATABASE_HOST_LOCAL;
-} else {
+} else if (process.env.NODE_ENV === 'staging') {
   DB = process.env.DATABASE_HOST.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
   DB = DB.replace('<DATABASE_NAME>', process.env.DATABASE_NAME);
 }
