@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const locationSchema = require('./locationSchema');
+const locationSchema = require('../schemas/locationSchema');
 
 const userSchema = new mongoose.Schema({
   name: {
