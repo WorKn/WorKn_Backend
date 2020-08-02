@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const locationSchema = require('../schemas/locationSchema');
+const tagSchema = require('../schemas/sharedTagSchema');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -112,12 +113,7 @@ const userSchema = new mongoose.Schema({
   },
   profilePicture: String,
   tags: {
-    type: [
-      {
-        name: String,
-        category: String,
-      },
-    ],
+    type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
     default: void 0,
     required: [
