@@ -5,10 +5,10 @@ const tagSchema = mongoose.Schema({
   name: {
     type: String,
     require: true,
-    unique: true,
     lowercase: true,
   },
   category: categorySchema,
+  _id: false,
 });
 
 module.exports = tagSchema;
