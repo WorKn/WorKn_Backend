@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const categorySchema = require('./categorySchema');
 
 const tagSchema = mongoose.Schema({
   name: {
@@ -7,11 +8,7 @@ const tagSchema = mongoose.Schema({
     unique: true,
     lowercase: true,
   },
-  category: {
-    type: String,
-    require: true,
-    lowercase: true,
-  },
+  category: categorySchema,
 });
 
 module.exports = tagSchema;
