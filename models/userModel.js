@@ -27,7 +27,15 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
   },
-  birthday: Date,
+  birthday: {
+    type: Date,
+    max: function () {
+      let minDate = new Date();
+      minDate.setFullYear(minDate.getFullYear() - 16);
+      return minDate;
+    },
+    required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
+  },
   chats: [
     {
       type: mongoose.Schema.ObjectId,
@@ -35,9 +43,27 @@ const userSchema = new mongoose.Schema({
     },
   ],
   category: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Category',
-    //Add validator if userType is Applicant
+    type: String,
+    // type: mongoose.Schema.ObjectId,
+    // ref: 'Category',
+    required: [
+      function () {
+        return this.userType == 'applicant';
+      },
+      'Por favor, seleccione una categoría de interés.',
+    ],
+    // type: mongoose.Schema.ObjectId,
+    // ref: 'Category',
+    // default: null,
+    // validate: {
+    //   validator: function (el) {
+    //     console.log('hola?');
+    //     if (this.userType == 'applicant') {
+    //       return el ? true : false;
+    //     } else return true;
+    //   },
+    //   message: 'Por favor, seleccione una categoría de interés.',
+    // },
   },
   location: {
     coordinates: [Number],
@@ -45,19 +71,19 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password.'],
-    minlength: [8, 'Password must have min 8 characters'],
+    required: [true, 'Por favor, provea una contraseña.'],
+    minlength: [8, 'Las contraseñas deben poseer como mínimos 8 caracteres.'],
     select: false,
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'Please provide confirm your password.'],
+    required: [true, 'Por favor, confirme su contraseña.'],
     validate: {
       //This only works on Create() and Save()
       validator: function (el) {
         return el == this.password;
       },
-      message: 'Passwords does not match.',
+      message: 'Las contraseñas no son iguales.',
     },
   },
   passwordChangedAt: Date,
@@ -74,7 +100,8 @@ const userSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['offerer', 'aplicant', 'admin'],
+    enum: ['offerer', 'applicant', 'admin'],
+    required: [true, 'Se requiere el tipo de usuario.'],
   },
   organization: {
     type: mongoose.Schema.ObjectId,
@@ -97,14 +124,54 @@ const userSchema = new mongoose.Schema({
         category: String,
       },
     ],
+    default: void 0,
+    required: [
+      function () {
+        return this.userType == 'applicant';
+      },
+      'Por favor, seleccione tags de interés.',
+    ],
     validate: {
       validator: function (el) {
+        // if(this.userType == 'applicant') el.length <= 0
         return el.length <= 10;
       },
-      message: 'Tag limit (10) exceeded.',
+      message: 'Límite de tags (10) excedido.',
     },
   },
 });
+
+// //This is a custom validator for 'aplicants'. It triggers when there is no category or tags.
+// userSchema.pre('validate', function (next) {
+//   if (this.userType == 'applicant') {
+//     if (this.category == null) {
+//       var error = new mongoose.Error.ValidationError(this);
+//       error.errors.category = new mongoose.Error.ValidatorError(
+//         {
+//           message: 'Por favor, seleccione una categoría de interés.',
+//           type: 'required',
+//           path: 'category',
+//         },
+//         this.category
+//       );
+//       return next(error);
+//     }
+//     if (this.tags == null) {
+//       var error = new mongoose.Error.ValidationError(this);
+//       error.errors.category = new mongoose.Error.ValidatorError(
+//         {
+//           message: 'Por favor, seleccione tags que le sean de interés.',
+//           type: 'required',
+//           path: 'tags',
+//         },
+//         this.tags
+//       );
+//       return next(error);
+//     }
+//   }
+
+//   return next();
+// });
 
 const User = mongoose.model('User', userSchema);
 
