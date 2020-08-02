@@ -43,27 +43,14 @@ const userSchema = new mongoose.Schema({
     },
   ],
   category: {
-    type: String,
-    // type: mongoose.Schema.ObjectId,
-    // ref: 'Category',
+    type: mongoose.Schema.ObjectId,
+    ref: 'Category',
     required: [
       function () {
         return this.userType == 'applicant';
       },
       'Por favor, seleccione una categoría de interés.',
     ],
-    // type: mongoose.Schema.ObjectId,
-    // ref: 'Category',
-    // default: null,
-    // validate: {
-    //   validator: function (el) {
-    //     console.log('hola?');
-    //     if (this.userType == 'applicant') {
-    //       return el ? true : false;
-    //     } else return true;
-    //   },
-    //   message: 'Por favor, seleccione una categoría de interés.',
-    // },
   },
   location: {
     coordinates: [Number],
@@ -124,6 +111,7 @@ const userSchema = new mongoose.Schema({
         category: String,
       },
     ],
+    //This is for preventing mongoose to create an empty array by default.
     default: void 0,
     required: [
       function () {
@@ -133,45 +121,12 @@ const userSchema = new mongoose.Schema({
     ],
     validate: {
       validator: function (el) {
-        // if(this.userType == 'applicant') el.length <= 0
         return el.length <= 10;
       },
       message: 'Límite de tags (10) excedido.',
     },
   },
 });
-
-// //This is a custom validator for 'aplicants'. It triggers when there is no category or tags.
-// userSchema.pre('validate', function (next) {
-//   if (this.userType == 'applicant') {
-//     if (this.category == null) {
-//       var error = new mongoose.Error.ValidationError(this);
-//       error.errors.category = new mongoose.Error.ValidatorError(
-//         {
-//           message: 'Por favor, seleccione una categoría de interés.',
-//           type: 'required',
-//           path: 'category',
-//         },
-//         this.category
-//       );
-//       return next(error);
-//     }
-//     if (this.tags == null) {
-//       var error = new mongoose.Error.ValidationError(this);
-//       error.errors.category = new mongoose.Error.ValidatorError(
-//         {
-//           message: 'Por favor, seleccione tags que le sean de interés.',
-//           type: 'required',
-//           path: 'tags',
-//         },
-//         this.tags
-//       );
-//       return next(error);
-//     }
-//   }
-
-//   return next();
-// });
 
 const User = mongoose.model('User', userSchema);
 
