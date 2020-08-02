@@ -30,9 +30,9 @@ const userSchema = new mongoose.Schema({
   birthday: {
     type: Date,
     max: function () {
-      let minDate = new Date();
-      minDate.setFullYear(minDate.getFullYear() - 16);
-      return minDate;
+      let maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() - 16);
+      return maxDate;
     },
     required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
   },
