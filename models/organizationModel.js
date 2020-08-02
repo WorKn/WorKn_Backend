@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const locationSchema = require('../schemas/locationSchema');
 
 const organizationSchema = new mongoose.Schema({
   name: {
@@ -8,16 +9,24 @@ const organizationSchema = new mongoose.Schema({
   },
   RNC: {
     type: String,
-    validate: [validator.isNumeric, 'El RNC debe poseer solo caracteres numéricos.'],
+    validate: [
+      {
+        validator: validator.isNumeric,
+        message: 'El RNC debe poseer solo caracteres numéricos.',
+      },
+      {
+        validator: function (el) {
+          return el.length == 9 || el.length == 11;
+        },
+        message: 'El RNC debe poseer 9 u 11 dígitos.',
+      },
+    ],
   },
   verified: {
     type: Boolean,
     default: false,
   },
-  location: {
-    coordinates: [Number],
-    address: String,
-  },
+  location: locationSchema,
   phone: {
     type: String,
     validate: [
@@ -41,7 +50,7 @@ const organizationSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function (el) {
-        return el.length >= 1;
+        return el.length > 0;
       },
       message: 'Una organización debe poseer al menos un usuario.',
     },
