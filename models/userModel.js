@@ -10,8 +10,16 @@ const userSchema = new mongoose.Schema({
   identificationNumber: {
     type: String,
     validate: [
-      validator.isNumeric,
-      'El número de identificación debe poseer solo caracteres numéricos.',
+      {
+        validator: validator.isNumeric,
+        message: 'El número de identificación debe poseer solo caracteres numéricos.',
+      },
+      {
+        validator: function (el) {
+          return el.length == 11;
+        },
+        message: 'El número de identificación debe poseer 11 dígitos.',
+      },
     ],
   },
   phone: {
