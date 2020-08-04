@@ -4,7 +4,7 @@ const interactionSchema = new mongoose.Schema({
     state: {
       type: String,
       enum: ['applied','interesed','match'],
-      required: [true, 'Una interación debe estar en un estado.'],
+      required: [true, 'Una interación debe poseer un estado.'],
       default: 'applied'
     },
     rejected: {
@@ -12,13 +12,12 @@ const interactionSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        required: [true, "Una interación debe de contener la fecha de creación."],
-        default: Date.now
+        default: Date.now()
     },
     updatedAt: {
         type: Date,
         required: [true, "Una interación debe de contener la fecha en que se modificó."],
-        default: Date.now
+        default: Date.now()
     },         
     offerer:{ 
         type: mongoose.Schema.ObjectId, 
@@ -27,7 +26,7 @@ const interactionSchema = new mongoose.Schema({
     applicant: { 
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        required: [true, "En una interación debe existir un aplicante." ] 
+        required: [true, "Una interación debe estar vinculada a un aplicante" ] 
     },
     Offer: { 
         type: mongoose.Schema.ObjectId,
