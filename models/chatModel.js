@@ -9,15 +9,15 @@ const chatSchema = new mongoose.Schema({
       },
     ],
   },
-  sender: {
+  user1: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
-    required: [true, 'El chat debe poseer un emisor.'],
+    required: [true, 'El chat debe estar vinculado a dos usuarios.'],
   },
-  receiver: {
+  user2: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
-    required: [true, 'El chat debe poseer un receptor.'],
+    required: [true, 'El chat debe estar vinculado a dos usuarios.'],
   },
   isLive: {
     type: Boolean,
