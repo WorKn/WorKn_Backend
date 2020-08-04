@@ -2,6 +2,8 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const userRouter = require('./routes/userRoutes');
+
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
@@ -21,6 +23,8 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.get('/', function (req, res) {
   res.send('Hello WorKn!!!');
 });
+
+app.use('api/vi/users', userRouter);
 
 //---Error handling---
 app.all('*', (req, res, next) => {
