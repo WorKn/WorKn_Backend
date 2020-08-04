@@ -5,7 +5,6 @@ const interactionSchema = new mongoose.Schema({
       type: String,
       enum: ['applied','interesed','match'],
       required: [true, 'Una interación debe poseer un estado.'],
-      default: 'applied'
     },
     rejected: {
       type: Boolean
