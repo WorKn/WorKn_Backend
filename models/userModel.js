@@ -57,12 +57,6 @@ const userSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',
-    // required: [
-    //   function () {
-    //     return this.userType == 'applicant';
-    //   },
-    //   'Por favor, seleccione una categoría de interés.',
-    // ],
   },
   location: locationSchema,
   password: {
@@ -128,12 +122,6 @@ const userSchema = new mongoose.Schema({
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
     default: void 0,
-    // required: [
-    //   function () {
-    //     return this.userType == 'applicant';
-    //   },
-    //   'Por favor, seleccione tags de interés.',
-    // ],
     validate: {
       validator: function (el) {
         return el.length < 11;
