@@ -30,24 +30,35 @@ const offerSchema = mongoose.Schema({
     
     location: locationSchema,
     
-    owner: { 
+    createdBy: { 
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        required: [true, "Una oferta no puede existir sin un dueño" ] 
+        required: [true, "Una oferta no puede existir sin un dueño" ],
     },
     organization: { 
         type: mongoose.Schema.ObjectId,
         ref: 'Organization',
-        validate: {
-            // check if you're in a organization 
-            validator: function (el) {
-              return el.owner.organization != null;
-            },
-            message: 'Una oferta solo puede pertenecer a una organización si usted está en una.',
-          },
     },
     
-    tag: tagSchema,
+    tags: {
+        type: [tagSchema],
+        validate: [
+            {
+                validator: function (el) {
+                    return el.length < 11;
+                },
+                message: 'La cantidad máxima de tags que se puede seleccionar es 10.'
+            },
+            {
+                validator: function (el) {
+                    return el.length > 2;
+                },
+                message: 'La cantidad mínima de tags que se puede seleccionar es 3.'
+            }
+            
+        ],
+
+    },
 
     category: {
         type: mongoose.Schema.ObjectId,
@@ -75,11 +86,25 @@ const offerSchema = mongoose.Schema({
     },
     salaryRange:{
         type: [Number],
-        validate: {
-            validator: function(arr){
-                return arr.every((n) => n > 0)
+        validate: [
+            {
+                validator: function(arr){
+                    return arr.every((n) => n > 0)
+                },
+                message: 'Un salario no puede ser menor a 0'
             },
-            message: 'Un salario no puede ser menor a 0'
-        }
+            {
+                validator: function(arr){
+                    return arr.length<3
+                },
+                message: 'Un salario debe estar contenido en un rango, o en su defecto, un monto fijo'
+            },
+        ]
+            
+        
     }
 })
+
+const Offer = mongoose.model('Offer', offerSchema);
+
+module.exports = Offer;
