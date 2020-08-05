@@ -17,14 +17,17 @@ app.use(cors());
 //Development logging
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
+//Body parser (reading data from body into req.body. Limit data size.)
+app.use(express.json({ limit: '10kb' }));
+
 //---Routes---
+
+app.use('/api/v1/users', userRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {
   res.send('Hello WorKn!!!');
 });
-
-app.use('api/vi/users', userRouter);
 
 //---Error handling---
 app.all('*', (req, res, next) => {

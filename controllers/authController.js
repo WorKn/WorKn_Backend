@@ -37,16 +37,18 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   if (req.body.userType == 'admin') {
-    return next(new AppError('Acción no permitida', 403));
+    return next(new AppError('Acción no permitida.', 403));
   }
 
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
+    birthday: req.body.birthday,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     userType: req.body.userType,
     organizationRole: req.body.organizationRole,
+    organization: req.body.organization,
   });
 
   createSendToken(newUser, 201, res);
