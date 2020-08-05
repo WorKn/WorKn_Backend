@@ -4,12 +4,12 @@ const tagUserSchema = mongoose.Schema({
     tag:{
         type: mongoose.Schema.ObjectId,
         ref: 'Tag',
-        require: [true,"Debe de estar asociado a un tag"]
+        required: [true,"Debe de estar asociado a un tag"]
     },
     user:{
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        require: [true,"Debe de estar asociado a un usuario"]
+        required: [true,"Debe de estar asociado a un usuario"]
     }
 })
 
