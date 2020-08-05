@@ -27,7 +27,7 @@ const interactionSchema = new mongoose.Schema({
         ref: 'User',
         required: [true, "Una interación debe estar vinculada a un aplicante" ] 
     },
-    Offer: { 
+    offer: { 
         type: mongoose.Schema.ObjectId,
         ref: 'Offer',
         required: [true, "Una interación debe estar vinculada a una oferta." ] 
