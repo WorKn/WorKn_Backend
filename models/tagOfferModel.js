@@ -8,7 +8,7 @@ const tagUserSchema = mongoose.Schema({
     },
     offer:{
         type: mongoose.Schema.ObjectId,
-        ref: 'offer',
+        ref: 'Offer',
         required: [true,"Debe de estar asociado a una oferta"]
     }
 })
