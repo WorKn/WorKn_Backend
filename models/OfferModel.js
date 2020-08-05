@@ -13,7 +13,7 @@ const offerSchema = mongoose.Schema({
     description: {
         type: String,
         maxlength: 3000,
-        require: [true,'Por favor, díganos que busca en su oferta']
+        require: [true,'Por favornpm, díganos que busca en su oferta']
     },
     offerType:{
 
@@ -25,6 +25,7 @@ const offerSchema = mongoose.Schema({
         type: String,
         enum: ['active','paused','deleted'],
         required: [true, 'Una oferta debe poseer un estado.'],
+        default: 'active'
     },
     
     location: locationSchema,
@@ -46,4 +47,39 @@ const offerSchema = mongoose.Schema({
           },
     },
     
+    tag: tagSchema,
+
+    category: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Category',
+        required: [true, "Una oferta debe poseer una categoria" ] 
+    },
+
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    updatedAt: {
+        type: Date,
+        required: [true, "Una oferta debe de contener la fecha en que se modificó."],
+        default: Date.now()
+    }, 
+    closingDate: {
+        type: Date,
+        validate:{
+            validator: function(el){
+                return el.closingDate > el.createdAt;
+            },
+            message: 'Una oferta no puede cerrar antes de ser creada'
+        }
+    },
+    salaryRange:{
+        type: [Number],
+        validate: {
+            validator: function(arr){
+                return arr.every((n) => n > 0)
+            },
+            message: 'Un salario no puede ser menor a 0'
+        }
+    }
 })
