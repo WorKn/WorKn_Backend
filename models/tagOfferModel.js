@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const tagUserSchema = mongoose.Schema({
+const tagOfferSchema = mongoose.Schema({
     tag:{
         type: mongoose.Schema.ObjectId,
         ref: 'Tag',
@@ -13,6 +13,6 @@ const tagUserSchema = mongoose.Schema({
     }
 })
 
-const tagUser = mongoose.model('TagUser',tagUserSchema);
+const tagOffer = mongoose.model('TagOffer',tagOfferSchema);
 
-module.exports = tagUser;
+module.exports = tagOffer;
