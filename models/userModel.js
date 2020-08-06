@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -149,6 +150,20 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods.verifyPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  //Creating reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  //Store the encrypted reset token in the user document
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  //Converting to miliseconds. Reset token will expire in 10 minutes
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  //Send unencrypted reset token to user
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);

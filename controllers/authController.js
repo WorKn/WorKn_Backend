@@ -2,6 +2,8 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const jwt = require('jsonwebtoken');
+const { requiredPaths } = require('../schemas/locationSchema');
+const sendEmail = require('./../utils/email');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -68,4 +70,54 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   createSendToken(user, 200, res);
+});
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(
+      new AppError(
+        'No se pudo encontrar a un usuario registrado con el email proporcionado.',
+        404
+      )
+    );
+  }
+
+  //Generate reset token and save user document
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  //Send email to user
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `Ha solicitado restaurar su contraseña? Envíe un PATCH request al suguiente url: ${resetURL}.\n
+  Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Restauración de contraseña (válido por 10 minutos)',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email.',
+    });
+  } catch (err) {
+    user.createPasswordResetToken = undefined;
+    user.createPasswordResetExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError(
+        'Ha ocurrido un error tratando de enviarle el email de restauración. Por favor, inténtelo de nuevo más atrde',
+        500
+      )
+    );
+  }
 });
