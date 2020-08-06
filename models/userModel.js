@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcrypt = require('bcryptjs');
+
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
@@ -55,12 +57,6 @@ const userSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',
-    required: [
-      function () {
-        return this.userType == 'applicant';
-      },
-      'Por favor, seleccione una categoría de interés.',
-    ],
   },
   location: locationSchema,
   password: {
@@ -75,7 +71,7 @@ const userSchema = new mongoose.Schema({
     validate: {
       //This only works on Create() and Save()
       validator: function (el) {
-        return el == this.password;
+        return el === this.password;
       },
       message: 'Las contraseñas no son iguales.',
     },
@@ -83,6 +79,17 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  isSignupCompleted: {
+    type: Boolean,
+    default: function () {
+      if (this.userType == 'applicant') return false;
+      else undefined;
+    },
+  },
+  isEmailValidated: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -115,19 +122,29 @@ const userSchema = new mongoose.Schema({
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
     default: void 0,
-    required: [
-      function () {
-        return this.userType == 'applicant';
-      },
-      'Por favor, seleccione tags de interés.',
-    ],
     validate: {
       validator: function (el) {
         return el.length < 11;
       },
-      message: 'Límite de tags (10) excedido.',
+      message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
+    },
+    validate: {
+      validator: function (el) {
+        return el.length > 2;
+      },
+      message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
     },
   },
+});
+
+userSchema.pre('save', async function (next) {
+  //If password have not been modified, do not execute this function
+  if (!this.isModified('password')) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+
+  this.passwordConfirm = undefined;
+  next();
 });
 
 const User = mongoose.model('User', userSchema);
