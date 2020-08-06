@@ -8,12 +8,12 @@ const offerSchema = mongoose.Schema({
     title:{
         type: String,
         maxlength: 300,
-        require: [true,'Por favor, proporcione un título a su oferta']
+        require: [true,'Por favor, proporcione un título a su oferta.']
     },
     description: {
         type: String,
         maxlength: 3000,
-        require: [true,'Por favor, proporcione una descrpción a su oferta']
+        require: [true,'Por favor, proporcione una descrpción a su oferta.']
     },
     offerType:{
 
@@ -33,7 +33,7 @@ const offerSchema = mongoose.Schema({
     createdBy: { 
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        required: [true, "Una oferta no puede existir sin un dueño" ],
+        required: [true, "Una oferta no puede existir sin un dueño." ],
     },
     organization: { 
         type: mongoose.Schema.ObjectId,
