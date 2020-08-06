@@ -4,7 +4,7 @@ const paymentLogSchema = mongoose.Schema({
     organization: {
         type: mongoose.Schema.ObjectId,
         ref: 'Organization',
-        required: [true, "Un pago debe ser emitido por una organización"]
+        required: [true, "Un pago debe ser emitido por una organización."]
     },
     createdAt: {
         type: Date,
@@ -16,6 +16,6 @@ const paymentLogSchema = mongoose.Schema({
     },
     amount:{
         type: Number,
-        required: [true, "Un pago debe contener el monto"],
+        required: [true, "Un pago debe contener el monto."],
     },
 })
