@@ -19,3 +19,6 @@ const paymentLogSchema = mongoose.Schema({
         required: [true, "Un pago debe contener el monto."],
     },
 })
+const paymentLog = mongoose.model('PaymentLog',paymentLogSchema);
+
+module.exports = paymentLog;
