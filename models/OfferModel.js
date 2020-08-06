@@ -13,7 +13,7 @@ const offerSchema = mongoose.Schema({
     description: {
         type: String,
         maxlength: 3000,
-        require: [true,'Por favornpm, díganos que busca en su oferta']
+        require: [true,'Por favor, proporcione una descrpción a su oferta']
     },
     offerType:{
 
