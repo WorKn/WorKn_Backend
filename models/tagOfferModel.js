@@ -4,12 +4,12 @@ const tagOfferSchema = mongoose.Schema({
     tag:{
         type: mongoose.Schema.ObjectId,
         ref: 'Tag',
-        required: [true,"Debe de estar asociado a un tag"]
+        required: [true,"Debe de estar asociado a un tag."]
     },
     offer:{
         type: mongoose.Schema.ObjectId,
         ref: 'Offer',
-        required: [true,"Debe de estar asociado a una oferta"]
+        required: [true,"Debe de estar asociado a una oferta."]
     }
 })
 
