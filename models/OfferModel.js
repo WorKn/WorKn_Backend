@@ -8,12 +8,12 @@ const offerSchema = mongoose.Schema({
     title:{
         type: String,
         maxlength: 300,
-        require: [true,'Por favor, proporcione un título a su oferta.']
+        required: [true,'Por favor, proporcione un título a su oferta.']
     },
     description: {
         type: String,
         maxlength: 3000,
-        require: [true,'Por favor, proporcione una descrpción a su oferta.']
+        required: [true,'Por favor, proporcione una descrpción a su oferta.']
     },
     offerType:{
 
@@ -54,10 +54,8 @@ const offerSchema = mongoose.Schema({
                     return el.length > 2;
                 },
                 message: 'La cantidad mínima de tags que se puede seleccionar es 3.'
-            }
-            
+            }            
         ],
-
     },
 
     category: {
@@ -100,8 +98,6 @@ const offerSchema = mongoose.Schema({
                 message: 'Un salario debe estar contenido en un rango, o en su defecto, un monto fijo'
             },
         ]
-            
-        
     }
 })
 
