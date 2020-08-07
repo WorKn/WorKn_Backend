@@ -148,6 +148,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   //Log user in
   createSendToken(user, 200, res);
+});
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;

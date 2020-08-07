@@ -174,7 +174,7 @@ userSchema.methods.createPasswordResetToken = function () {
 
   //Send unencrypted reset token to user
   return resetToken;
-
+}
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     //Convert date to miliseconds
