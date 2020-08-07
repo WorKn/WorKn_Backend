@@ -69,3 +69,17 @@ exports.login = catchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+//Restrict middleware
+exports.restricTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
+      );
+    }
+    next();
+  };
+};
+
+
