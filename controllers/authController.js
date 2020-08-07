@@ -4,6 +4,8 @@ const AppError = require('./../utils/appError');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('./../utils/email');
+const { promisify } = require('util');
+
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -71,6 +73,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
@@ -145,4 +148,42 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   //Log user in
   createSendToken(user, 200, res);
+
+exports.protect = catchAsync(async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  //If token does not exist, then the user its not logged in
+  if (!token) {
+    return next(new AppError('No se encuentra logueado.', 401));
+  }
+
+  //Note: jwt.verify uses a callback insted of returning a promise, so we use the node built
+  //in utils.promisify function to make a promise out of this, and await that function.
+
+  //Validate token and decode
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+  const currentUser = await User.findById(decoded.id);
+
+  //Check if the user owner of the token still exists
+  if (!currentUser) {
+    return next(new AppError('El usuario ya no existe.', 401));
+  }
+
+  //Check if user changed password after token was issued
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError(
+        'El usuario ha cambiado la contraseña recientemente. Por favor, haga login nuevamente',
+        401
+      )
+    );
+  }
+
+  req.user = currentUser;
+  next();
 });

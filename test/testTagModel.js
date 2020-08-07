@@ -5,7 +5,7 @@ const testModel = require('./testModel');
 
 new_element = {
   name: 'js2',
-  category: 'tech',
+  category: '5f2375264620f36c4ba15a7c',
 };
 
 testModel(new_element, Model);

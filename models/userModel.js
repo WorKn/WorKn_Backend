@@ -161,6 +161,7 @@ userSchema.methods.verifyPassword = async function (candidatePassword, userPassw
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+
 userSchema.methods.createPasswordResetToken = function () {
   //Creating reset token
   const resetToken = crypto.randomBytes(32).toString('hex');
@@ -173,6 +174,16 @@ userSchema.methods.createPasswordResetToken = function () {
 
   //Send unencrypted reset token to user
   return resetToken;
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    //Convert date to miliseconds
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+
+    return JWTTimestamp < changedTimestamp;
+  }
+
+  return false;
 };
 
 const User = mongoose.model('User', userSchema);
