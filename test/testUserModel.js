@@ -4,15 +4,15 @@ const dbConection = require('./dbConection');
 const testModel = require('./testModel');
 
 new_element = {
-  name: 'BigAdmin2',
-  email: 'Irules@gmail.com',
-  identificationNumber: '12345606910',
+  name: 'Yordi Ogando',
+  email: 'balbla4325@gmail.com',
+  identificationNumber: '12345678910',
   password: '123456878',
   passwordConfirm: '123456878',
-  userType: 'admin',
+  userType: 'offerer',
   // userType: 'applicant',
   birthday: '2003-09-12',
-  category: '5f2375264620f36c4ba15a7c',
+  // category: 'Tecnologa',
   location: {
     coordinates: [13.25, 25.002],
     address: 'calle 4',
