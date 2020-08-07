@@ -1,5 +1,7 @@
 const AppError = require('./../utils/appError');
 
+const handleJWTError = () => new AppError('Por favor, inicie sesión nuevamente.', 401);
+
 //Sending errors in a Development environment
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -10,7 +12,7 @@ const sendErrorDev = (err, res) => {
   });
 };
 
-//Sending errors in a Production environment
+//Sending errors in a Production/Staging environment
 const sendErrorProd = (err, res) => {
   // Errors created by us, in other words trusted error: send message to client
   if (err.isOperational) {
@@ -41,6 +43,11 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else {
-    sendErrorProd(err, res);
+    let error = err;
+
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError')
+      error = handleJWTError();
+
+    sendErrorProd(error, res);
   }
 };
