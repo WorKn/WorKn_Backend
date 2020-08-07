@@ -1,20 +1,33 @@
 const Organization = require('./../models/organizationModel');
+const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
-const factory = require('./handlerFactory');
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
     
-    const organization = await Organization.create({
+    if(req.user.organization){
+        return next(new AppError("Usted ya posee una organización asociada",400));
+    }
+        
+    const newOrganization = await Organization.create({
       name: req.body.name,
+      RNC: req.body.RNC,
+      location: req.body.location,
+      phone: req.body.phone,
       email: req.body.email,
-      birthday: req.body.birthday,
-      password: req.body.password,
-      passwordConfirm: req.body.passwordConfirm,
-      userType: req.body.userType,
-      organizationRole: req.body.organizationRole,
-      organization: req.body.organization,
+      members: [req.user.id],
     });
-  
-    createSendToken(newUser, 201, res);
+    console.log(newOrganization);
+    const owner = await User.findById(req.user.id);
+    owner.organization = newOrganization._id;
+    await owner.save({validateBeforeSave: false});
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            newOrganization,
+        },
+    });
+    
 });
+

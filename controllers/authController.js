@@ -190,7 +190,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.restricTo = (...admittedRoles) =>{
-   return (req, res, next) => { 
+   return (req, res, next) => {
+    //console.log(req); 
     if (!admittedRoles.includes(req.user.userType) && !admittedRoles.includes(req.user.organizationRole)) {
       return next(
         new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
