@@ -71,9 +71,12 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 //Restrict middleware
-exports.restricTo = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+exports.restricTo = (...admittedRoles) =>{
+   return (req, res, next) => {
+    //console.log(req);   
+    const user = req.body.user
+    //console.log(user);
+    if (!admittedRoles.includes(user.userType) && !admittedRoles.includes(user.organizationRole)) {
       return next(
         new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
       );
