@@ -148,6 +148,27 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+
+  const user = await User.findById(req.user.id).select('+password');
+
+  //Verify that user's currect password is correct
+  if (!(await user.verifyPassword(currentPassword, user.password))) {
+    return next(new AppError('Contraseña incorrecta.', 401));
+  }
+
+  //Update password
+  user.password = newPassword;
+  user.passwordConfirm = newPasswordConfirm;
+
+  //Save user and run validators
+  await user.save();
+
+  //Log user in
+  createSendToken(user, 200, res);
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
 
