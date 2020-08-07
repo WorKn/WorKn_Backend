@@ -151,7 +151,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.updatePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, newPasswordConfirm } = req.body;
 
-  const user = await (await User.findById(req.user.id)).isSelected('+password');
+  const user = await User.findById(req.user.id).select('+password');
 
   //Verify that user's currect password is correct
   if (!(await user.verifyPassword(currentPassword, user.password))) {
