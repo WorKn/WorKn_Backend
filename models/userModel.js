@@ -148,6 +148,15 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+//When the user modify its password and its not new, we want to update the passwordChangedAt field
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // Substracting 1 second will ensure that the token be created after the password has been changed
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 userSchema.methods.verifyPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };

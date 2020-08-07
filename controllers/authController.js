@@ -2,7 +2,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const jwt = require('jsonwebtoken');
-const { requiredPaths } = require('../schemas/locationSchema');
+const crypto = require('crypto');
 const sendEmail = require('./../utils/email');
 
 const signToken = (id) => {
@@ -120,4 +120,29 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       )
     );
   }
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  //Find user using the token. But first we need to hash it
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError('Token inválido o expirado', 400));
+  }
+
+  //Update password and save user document
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  //Log user in
+  createSendToken(user, 200, res);
 });
