@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const sendEmail = require('./../utils/email');
 const { promisify } = require('util');
 
-
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -73,7 +72,6 @@ exports.login = catchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
-
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
@@ -148,6 +146,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   //Log user in
   createSendToken(user, 200, res);
+});
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
@@ -188,9 +187,12 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.restricTo = (...admittedRoles) =>{
-   return (req, res, next) => { 
-    if (!admittedRoles.includes(req.user.userType) && !admittedRoles.includes(req.user.organizationRole)) {
+exports.restricTo = (...admittedRoles) => {
+  return (req, res, next) => {
+    if (
+      !admittedRoles.includes(req.user.userType) &&
+      !admittedRoles.includes(req.user.organizationRole)
+    ) {
       return next(
         new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
       );
