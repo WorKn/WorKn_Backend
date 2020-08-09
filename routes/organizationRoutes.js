@@ -17,7 +17,11 @@ router
 
 router
     .route('/:id')
+<<<<<<< HEAD
     .get(protect, getOrganization);
+=======
+    .get(protect, restricTo ,getOrganization);
+>>>>>>> feature/WB-29
 
 router
     .route('/:id/members')
@@ -27,7 +31,11 @@ router
     .route('/:id/members/add')
     .post(protect, restricTo('owner','supervisor') , addOrganizationMember);
 router
+<<<<<<< HEAD
     .route('/:id/members/remove/:target')
+=======
+    .route('/:id/members/remove:target')
+>>>>>>> feature/WB-29
     .post(protect, restricTo('owner','supervisor','') , removeOrganizationMember);   
 
 
