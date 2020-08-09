@@ -28,7 +28,7 @@ router
     .post(protect, restricTo('owner','supervisor') , addOrganizationMember);
 router
     .route('/:id/members/remove/:target')
-    .post(protect, restricTo('owner','supervisor','') , removeOrganizationMember);   
+    .post(protect, restricTo('owner','supervisor') , removeOrganizationMember);   
 
 
 module.exports = router;
