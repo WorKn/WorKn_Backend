@@ -116,6 +116,7 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
         const userRole = req.user.organizationRole;
         const targetUser = await User.findById(req.params.target)
         const originOrg = await Organization.findById(req.params.id);
+
         if(!originOrg.members.includes(targetUser.id)){
             return next(
                 new AppError("Este usuario no pertenece a esta organización",401));
@@ -134,10 +135,16 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no se puede eliminar a su mismo, mediante esta opción.",401));
         }
         
-        const index = originOrg.members.indexOf(targetUser.id);
+        const index = originOrg.members.indexOf(req.params.target);
         if (index > -1) {
             originOrg.members.splice(index, 1);
         }
+
+        const member = await User.findById(req.params.target);
+                member.organizationRole= null;
+                const nMember = await User.findByIdAndUpdate(member,member, {                    
+                    new: true
+                });
 
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
