@@ -21,7 +21,7 @@ function mergeArrays(...arrays) {
 exports.createOrganization = catchAsync(async (req, res, next) => {
     try {
         if(req.user.organization){
-            return next(new AppError("Usted ya posee una organización asociada",400));
+            return next(new AppError("Usted ya posee una organización asociada.",400));
         }
             
         const organization = await Organization.create({
@@ -68,7 +68,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
     try {
         if(req.user.organization != req.params.id){
             return next(
-                new AppError("Usted no pertenece a esta organización, no puede agregar miembros",401));
+                new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
         mergeArrays(originOrg.members,req.body.members);
