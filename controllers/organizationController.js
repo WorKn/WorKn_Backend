@@ -56,6 +56,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
 exports.getOrganization = catchAsync(async (req, res, next) =>{
 
     const organization = await Organization.findById(req.params.id);
+    
     res.status(200).json({
         status: 'success',
         data: {
