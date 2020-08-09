@@ -26,7 +26,8 @@ router
 
 router
     .route('/:id/members/invite')
-    .post(protect, restricTo('owner','supervisor') , sendOrganizationJoinRequest);
+    .post(protect, restricTo('owner','supervisor'), sendOrganizationJoinRequest);
+    
 router
     .route('/:id/members/remove/:target')
     .post(protect, restricTo('owner','supervisor') , removeOrganizationMember);   

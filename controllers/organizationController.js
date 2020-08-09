@@ -57,15 +57,12 @@ exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
         return next(
             new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
     }
-    console.log("members");
+
     const org = await Organization.findById(req.params.id);
-    console.log(org.members);
-    org.members.forEach( async(memb) => {
-        
+    org.members.forEach( async(memb) => {      
         orgUserEmail.push(await User.findById(memb).email);
     });
 
-    console.log("procced to send email");
 
     req.body.members.forEach(async(element) => {
         if(!orgUserEmail.includes(element)){
@@ -77,12 +74,22 @@ exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
                 pass: 'worknrd0608'
                 }
             });
-            
+            /*
+            const joinReq = MemberInvitation.create();
+            token = joinReq.createToken();
+
+            joinReq.Token = crypto.createHash('sha256').update(token).digest('hex');
+            //120 min
+            joinReq.ExpireDate = Date.now() + 120 * 60 * 1000;
+            */
+            const newJoinLink = `${req.protocol}://${req.get(
+                'host'
+              )}/api/v1/users/signup/${org.id}`;
             var mailOptions = {
                 from: 'soporte.worknrd@gmail.com',
                 to: element,
                 subject: `Fuiste invitado a ${org.name} en WorKn`,
-                text: 'Te an v'
+                text: `Has sido invitado a ${org.name} en Workn, si deseas unierte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo `
             };
             
             transporter.sendMail(mailOptions, function(error, info){
@@ -112,22 +119,19 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
+
+        /*
         req.body.members.forEach(async(element) => {
             if(!originOrg.members.includes(element)){
                 originOrg.members.push(element);
-                const member = await User.findById(element);
-                member.organizationRole="member";
-                const nMember = await User.findByIdAndUpdate(element,member, {                    
-                    new: true
-                });
             }
         });
+        */
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
         });
-
-    
+   
         res.status(201).json({
             status: 'success',
             data: {
