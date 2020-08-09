@@ -96,5 +96,38 @@ exports.viewOrganizationMember = catchAsync(async (req, res, next) => {
 });
 
 exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
-
+    try {
+        if(req.user.organization != req.params.id){
+            return next(
+                new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+        }
+        const userRole = req.user.organizationRole;
+        const targetUser = await User.findById(req.params.target)
+        if(
+            userRole=="supervisor"  && 
+            (targetUser.organizationRole=="owner" || 
+            targetUser.organizationRole=="supervisor"))
+            {
+            return next(
+                new AppError("Usted solo puede eliminar miembros con rango menor al suyo.",401));
+        }
+        const originOrg = await Organization.findById(req.params.id);
+        mergeArrays(originOrg.members,req.body.members);
+        const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
+            new: true,
+            runValidators: true
+        });
+        
+        res.status(201).json({
+            status: 'success',
+            data: {
+                organization,
+            },
+        });
+    } catch (err) {
+        res.status(404).json({
+            status: 'fail',
+            message: err.message
+        });
+    }  
 });
