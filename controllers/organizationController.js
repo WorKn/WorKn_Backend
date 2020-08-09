@@ -2,23 +2,8 @@ const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
+const nodemailer = require('nodemailer');
 
-function mergeArrays(...arrays) {
-    let jointArray = []
-    arrays.forEach(array => {
-        jointArray = [...jointArray, ...array]
-    })
-    console.log(arrays);
-    const uniqueArray = jointArray.reduce((newArray, item) =>{
-        if (newArray.includes(String(item))){
-            return newArray
-        } else {
-            return [...newArray, item]
-        }
-    }, [])
-    console.log(uniqueArray);
-    return uniqueArray
-}
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
     try {
@@ -64,6 +49,60 @@ exports.getOrganization = catchAsync(async (req, res, next) =>{
     });
 
 });
+
+exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
+    
+    const orgUserEmail = [];
+    if(req.user.organization != req.params.id){
+        return next(
+            new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+    }
+    console.log("members");
+    const org = await Organization.findById(req.params.id);
+    console.log(org.members);
+    org.members.forEach( async(memb) => {
+        
+        orgUserEmail.push(await User.findById(memb).email);
+    });
+
+    console.log("procced to send email");
+
+    req.body.members.forEach(async(element) => {
+        if(!orgUserEmail.includes(element)){
+
+            var transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                user: 'soporte.worknrd@gmail.com',
+                pass: 'worknrd0608'
+                }
+            });
+            
+            var mailOptions = {
+                from: 'soporte.worknrd@gmail.com',
+                to: element,
+                subject: `Fuiste invitado a ${org.name} en WorKn`,
+                text: 'Te an v'
+            };
+            
+            transporter.sendMail(mailOptions, function(error, info){
+                if (error) {
+                console.log(error);
+                } else {
+                console.log('Email sent: ' + info.response);
+                }
+            });
+        }
+    });
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            message: "email sent to"
+        },
+    });
+});
+
 
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
         
