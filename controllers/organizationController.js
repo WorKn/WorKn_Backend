@@ -73,15 +73,21 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
-        req.body.members.forEach(element => {
+        req.body.members.forEach(async(element) => {
             if(!originOrg.members.includes(element)){
                 originOrg.members.push(element);
+                const member = await User.findById(element);
+                member.organizationRole="member";
+                const nMember = await User.findByIdAndUpdate(element,member, {                    
+                    new: true
+                });
             }
         });
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
         });
+
     
         res.status(201).json({
             status: 'success',
