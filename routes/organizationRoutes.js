@@ -17,7 +17,7 @@ router
 
 router
     .route('/:id')
-    .get(protect, restricTo ,getOrganization);
+    .get(protect, getOrganization);
 
 router
     .route('/:id/members')
@@ -27,7 +27,7 @@ router
     .route('/:id/members/add')
     .post(protect, restricTo('owner','supervisor') , addOrganizationMember);
 router
-    .route('/:id/members/remove:target')
+    .route('/:id/members/remove/:target')
     .post(protect, restricTo('owner','supervisor','') , removeOrganizationMember);   
 
 

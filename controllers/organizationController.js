@@ -71,7 +71,9 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
+        console.log(req.body.members)
         mergeArrays(originOrg.members,req.body.members);
+        console.log(mergeArrays(originOrg.members,req.body.members));
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
@@ -103,6 +105,11 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
         }
         const userRole = req.user.organizationRole;
         const targetUser = await User.findById(req.params.target)
+        const originOrg = await Organization.findById(req.params.id);
+        if(!originOrg.members.includes(targetUser.id)){
+            return next(
+                new AppError("Este usuario no pertenece a esta organización",401));
+        }
         if(
             userRole=="supervisor"  && 
             (targetUser.organizationRole=="owner" || 
@@ -111,8 +118,17 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
             return next(
                 new AppError("Usted solo puede eliminar miembros con rango menor al suyo.",401));
         }
-        const originOrg = await Organization.findById(req.params.id);
-        mergeArrays(originOrg.members,req.body.members);
+
+        if(targetUser==req.user){
+            return next(
+                new AppError("Usted no se puede eliminar a su mismo, mediante esta opción.",401));
+        }
+        
+        const index = originOrg.members.indexOf(targetUser.id);
+        if (index > -1) {
+            originOrg.members.splice(index, 1);
+        }
+
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
