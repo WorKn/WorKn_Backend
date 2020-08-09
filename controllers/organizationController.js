@@ -73,17 +73,11 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
-<<<<<<< HEAD
-        console.log(req.body.members)
-        mergeArrays(originOrg.members,req.body.members);
-        console.log(mergeArrays(originOrg.members,req.body.members));
-=======
         req.body.members.forEach(element => {
             if(!originOrg.members.includes(element)){
                 originOrg.members.push(element);
             }
         });
->>>>>>> feature/WB-29
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
