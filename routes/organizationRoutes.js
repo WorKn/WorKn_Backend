@@ -17,18 +17,18 @@ router
 
 router
     .route('/:id')
-    .get(protect, restricTo('owner','supervisor','offerer') ,getOrganization);
+    .get(protect, restricTo ,getOrganization);
 
 router
     .route('/:id/members')
-    .post(protect, restricTo('owner','supervisor','offerer','applicant') , viewOrganizationMember);
+    .get(protect, restricTo('owner','supervisor','member') , viewOrganizationMember);
 
 router
     .route('/:id/members/add')
-    .post(protect, restricTo('owner','supervisor','offerer','applicant') , addOrganizationMember);
+    .post(protect, restricTo('owner','supervisor') , addOrganizationMember);
 router
-    .route('/:id/members/remove')
-    .post(protect, restricTo('owner','supervisor','offerer','applicant') , removeOrganizationMember);   
+    .route('/:id/members/remove:target')
+    .post(protect, restricTo('owner','supervisor','') , removeOrganizationMember);   
 
 
 module.exports = router;
