@@ -8,13 +8,15 @@ function mergeArrays(...arrays) {
     arrays.forEach(array => {
         jointArray = [...jointArray, ...array]
     })
+    console.log(arrays);
     const uniqueArray = jointArray.reduce((newArray, item) =>{
-        if (newArray.includes(item)){
+        if (newArray.includes(String(item))){
             return newArray
         } else {
             return [...newArray, item]
         }
     }, [])
+    console.log(uniqueArray);
     return uniqueArray
 }
 
@@ -71,7 +73,11 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
-        mergeArrays(originOrg.members,req.body.members);
+        req.body.members.forEach(element => {
+            if(!originOrg.members.includes(element)){
+                originOrg.members.push(element);
+            }
+        });
         const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
             new: true,
             runValidators: true
