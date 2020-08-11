@@ -2,7 +2,7 @@ const express = require('express');
 const { 
     createOrganization,
     addOrganizationMember,
-    sendOrganizationJoinRequest,
+    sendInvitationEmail,
     getOrganization,
     viewOrganizationMember,
     removeOrganizationMember
@@ -26,7 +26,7 @@ router
 
 router
     .route('/:id/members/invite')
-    .post(protect, restricTo('owner','supervisor'), sendOrganizationJoinRequest);
+    .post(protect, restricTo('owner','supervisor'), sendInvitationEmail);
     
 router
     .route('/:id/members/remove/:target')

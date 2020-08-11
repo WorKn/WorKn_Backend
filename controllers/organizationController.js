@@ -50,7 +50,7 @@ exports.getOrganization = catchAsync(async (req, res, next) =>{
 
 });
 
-exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
+exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
     
     const orgUserEmail = [];
     if(req.user.organization != req.params.id){
@@ -74,6 +74,7 @@ exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
                 pass: 'worknrd0608'
                 }
             });
+            
             /*
             const joinReq = MemberInvitation.create();
             token = joinReq.createToken();
@@ -82,6 +83,7 @@ exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
             //120 min
             joinReq.ExpireDate = Date.now() + 120 * 60 * 1000;
             */
+           
             const newJoinLink = `${req.protocol}://${req.get(
                 'host'
               )}/api/v1/users/signup/${org.id}`;
@@ -110,7 +112,7 @@ exports.sendOrganizationJoinRequest = catchAsync(async(req, res,next) => {
     });
 });
 
-
+//ValidateToken->membersingup (validated)-> add organization =>>> all this is in a new endpoint alone (NOT REGULAR SIGNUP)
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
         
     try {
