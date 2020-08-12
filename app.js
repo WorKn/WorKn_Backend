@@ -19,7 +19,7 @@ app.use(cors());
 //Development logging
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
-//Body parser (reading data from body into req.body. Limit data size.)
+//Body parser (reading data from body and cookies into req.body and req.cookies, limit data size)
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
