@@ -4,7 +4,7 @@ const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const nodemailer = require('nodemailer');
 
-
+//restore my prev version :) 
 exports.createOrganization = catchAsync(async (req, res, next) => {
     try {
         if(req.user.organization){
@@ -22,7 +22,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
         const owner = await User.findById(req.user.id);
         owner.organization = organization._id;
         await owner.save({validateBeforeSave: false});
-    
+        
         res.status(201).json({
             status: 'success',
             data: {
@@ -34,7 +34,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
             status: 'fail',
             message: error
         });
-    }
+    }   
     
 });
 
@@ -83,7 +83,7 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
             //120 min
             joinReq.ExpireDate = Date.now() + 120 * 60 * 1000;
             */
-           
+
             const newJoinLink = `${req.protocol}://${req.get(
                 'host'
               )}/api/v1/users/signup/${org.id}`;
@@ -111,8 +111,8 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
         },
     });
 });
-
-//ValidateToken->membersingup (validated)-> add organization =>>> all this is in a new endpoint alone (NOT REGULAR SIGNUP)
+//It will be signupMember
+//ValidateToken->membersignup (validated)-> add organization =>>> all this is in a new endpoint alone (NOT REGULAR SIGNUP)
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
         
     try {
@@ -121,7 +121,6 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
                 new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
         }
         const originOrg = await Organization.findById(req.params.id);
-
         /*
         req.body.members.forEach(async(element) => {
             if(!originOrg.members.includes(element)){
