@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
@@ -20,6 +21,7 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
 //Body parser (reading data from body into req.body. Limit data size.)
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 //---Routes---
 
