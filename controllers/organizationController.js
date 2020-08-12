@@ -3,6 +3,7 @@ const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handlerFactory');
+const { response } = require('express');
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
     
@@ -30,5 +31,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     });
     
 });
+
+exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
