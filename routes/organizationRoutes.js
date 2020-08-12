@@ -1,10 +1,13 @@
 const express = require('express');
-const { createOrganization } = require('./../controllers/organizationController');
+const { createOrganization, getOrganization } = require('./../controllers/organizationController');
 const { restricTo , protect} = require('./../controllers/authController');
 
 const router = express.Router();
 
 router.post('/createOrganization' , protect, restricTo('owner') ,createOrganization);
 
+router
+    .route('/:id')
+    .get(protect, getOrganization);
 
 module.exports = router;
