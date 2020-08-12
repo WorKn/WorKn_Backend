@@ -54,6 +54,7 @@ exports.getOne = (Model, popOptions) =>
     //If there is a popOption, we want to populate
     if (popOptions) query = query.populate(popOptions);
 
+    query = query.select('-__v');
     const doc = await query;
 
     if (!doc) {
