@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.post('/createOrganization' , protect, restricTo('owner') ,createOrganization);
 
-router.get('/',getAllOrganizations)
+router.get('/', getAllOrganizations)
 
 module.exports = router;
