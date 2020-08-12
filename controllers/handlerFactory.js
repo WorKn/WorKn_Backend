@@ -54,6 +54,7 @@ exports.getOne = (Model, popOptions) =>
     //If there is a popOption, we want to populate
     if (popOptions) query = query.populate(popOptions);
 
+    query = query.select('-__v');
     const doc = await query;
 
     if (!doc) {
@@ -70,7 +71,7 @@ exports.getOne = (Model, popOptions) =>
 
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(Model.find(filter), req.query)
+    const features = new APIFeatures(Model.find(), req.query)
       .filter()
       .sort()
       .limitFields()
