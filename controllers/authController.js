@@ -23,7 +23,7 @@ const createSendToken = (user, statusCode, res) => {
   };
 
   if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
-    cookieOptions.secure = true;
+    cookieOptions.secure = false; //Remember change this to true when Https be available
   }
 
   res.cookie('jwt', token, cookieOptions);
@@ -72,6 +72,16 @@ exports.login = catchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({
+    status: 'success',
+  });
+};
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
@@ -174,6 +184,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   //If token does not exist, then the user its not logged in
