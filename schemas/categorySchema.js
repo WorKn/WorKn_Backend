@@ -8,3 +8,5 @@ const categorySchema = mongoose.Schema({
     lowercase: true,
   },
 });
+
+module.exports = categorySchema;
