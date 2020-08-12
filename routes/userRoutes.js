@@ -19,10 +19,11 @@ router.get('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 
+router.get('/', getAllUsers);
+
 //Protected routes
 router.use(protect);
 
 router.patch('/updatePassword/', updatePassword);
-router.get('/', getAllUsers);
 
 module.exports = router;
