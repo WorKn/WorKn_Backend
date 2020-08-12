@@ -8,6 +8,6 @@ router.post('/createOrganization' , protect, restricTo('owner') ,createOrganizat
 
 router
     .route('/:id')
-    .get(protect, getOrganization);
+    .get(getOrganization);
 
 module.exports = router;
