@@ -6,6 +6,7 @@ const categorySchema = mongoose.Schema({
     require: true,
     lowercase: true,
   },
+  _id: false,
 });
 
 module.exports = categorySchema;
