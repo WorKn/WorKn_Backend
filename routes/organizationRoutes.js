@@ -1,5 +1,8 @@
 const express = require('express');
-const { createOrganization,getAllOrganizations, getOrganization } = require('./../controllers/organizationController');
+const { createOrganization
+  ,getAllOrganizations
+  ,getOrganization
+  ,editOrganization } = require('./../controllers/organizationController');
 const { restricTo , protect} = require('./../controllers/authController');
 
 const router = express.Router();
@@ -12,6 +15,7 @@ router
 
 router
   .route('/')
-  .get(getAllOrganizations);
+  .get(getAllOrganizations)
+  .post(protect,restricTo("owner"),editOrganization);
 
 module.exports = router;

@@ -31,7 +31,9 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     });
     
 });
-
+exports.editOrganization = catchAsync(async(req,res,next) => {
+    
+});
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
