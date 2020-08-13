@@ -6,6 +6,14 @@ const factory = require('./handlerFactory');
 const { response } = require('express');
 const { param } = require('../routes/userRoutes');
 
+const filterObj = (obj, allowedFields) => {
+    const newObj = {};
+    Object.keys(obj).forEach((el) => {
+      if (allowedFields.includes(el)) newObj[el] = obj[el];
+    });
+    return newObj;
+};
+
 exports.createOrganization = catchAsync(async (req, res, next) => {
     
     if(req.user.organization){
@@ -34,6 +42,10 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
 });
 exports.editOrganization = catchAsync(async(req,res,next) => {
 
+    if(req.user.organization != req.params.id){
+        return next(
+            new AppError("Usted no pertenece a esta organización, no tiene permisos para editarla",401));
+    }
     if (req.body.members) {
         return next( new AppError(
             'No puedes modificar tus miembros aquí, por favor, dirígase al menú de miembros', 400)
@@ -43,7 +55,7 @@ exports.editOrganization = catchAsync(async(req,res,next) => {
     allowedFields = ['name', 'location', 'phone', 'email'];      
     filteredBody = filterObj(req.body, allowedFields);
     
-    const updatedOrg = await Organization.findByIdAndUpdate(params.id, filteredBody, {
+    const updatedOrg = await Organization.findByIdAndUpdate(req.params.id, filteredBody, {
         new: true,
         runValidators: true
     });

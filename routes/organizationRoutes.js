@@ -11,11 +11,11 @@ router.post('/createOrganization' , protect, restricTo('owner') ,createOrganizat
 
 router
     .route('/:id')
-    .get(getOrganization);
+    .get(getOrganization)
+    .post(protect,restricTo("owner"),editOrganization);
 
 router
   .route('/')
-  .get(getAllOrganizations)
-  .post(protect,restricTo("owner"),editOrganization);
-
+  .get(getAllOrganizations);
+  
 module.exports = router;
