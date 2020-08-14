@@ -52,7 +52,12 @@ exports.editOrganization = catchAsync(async(req,res,next) => {
         );
       }
       
-    allowedFields = ['name', 'location', 'phone', 'email'];      
+    allowedFields = ['name', 'location', 'phone', 'email'];
+    
+    org = await Organization.findById(req.params.id);
+    if(!org.RNC) {
+        allowedFields.push("RNC");
+    }      
     filteredBody = filterObj(req.body, allowedFields);
     
     const updatedOrg = await Organization.findByIdAndUpdate(req.params.id, filteredBody, {
