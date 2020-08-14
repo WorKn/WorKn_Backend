@@ -3,8 +3,6 @@ const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handlerFactory');
-const { response } = require('express');
-const { param } = require('../routes/userRoutes');
 
 const filterObj = (obj, allowedFields) => {
     const newObj = {};
