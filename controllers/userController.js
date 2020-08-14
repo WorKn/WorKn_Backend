@@ -28,7 +28,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     );
   }
 
-  let allowedFields = ['name', 'lastname', 'identificationNumber', 'phone', 'location'];
+  let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
 
   if (req.user.userType === 'applicant') {
     allowedFields.push('category', 'tags');
