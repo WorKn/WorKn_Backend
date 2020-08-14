@@ -1,8 +1,10 @@
-const User = require('./../models/userModel');
-const Tag = require('./../models/tagModel');
 const factory = require('./handlerFactory');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+
+const User = require('./../models/userModel');
+const Tag = require('./../models/tagModel');
+const TagUser = require('./../models/tagUserModel');
 
 const filterObj = (obj, allowedFields) => {
   const newObj = {};
@@ -26,23 +28,33 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     );
   }
 
-  let allowedFields = ['name', 'identificationNumber', 'phone', 'location'];
+  let allowedFields = ['name', 'lastname', 'identificationNumber', 'phone', 'location'];
 
   if (req.user.userType === 'applicant') {
     allowedFields.push('category', 'tags');
 
-    const tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
-    req.body.tags = tags;
+    const tags = req.body.tags;
+    //Update tag's ref with their values
+    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
   }
 
   //Filter out unwanted fields names that are not allowed to be updated
-  let filteredBody = filterObj(req.body, allowedFields);
+  const filteredBody = filterObj(req.body, allowedFields);
 
   // Update user document
-  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+  let updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,
     runValidators: true,
   });
+
+  //If applicant has a category and tags, delete isSignupCompleted atribute
+  if (updatedUser.tags && updatedUser.category) {
+    updatedUser.isSignupCompleted = undefined;
+    updatedUser.save({ validateBeforeSave: false });
+  }
+
+  //Create the new TagUser records asynchronously
+  updateTagUser(req.user.id, tags);
 
   res.status(200).json({
     status: 'success',
@@ -51,3 +63,12 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const updateTagUser = async (user, tags) => {
+  tags.forEach((tag) => {
+    TagUser.create({ tag, user }).catch((err) => {
+      //Error code 11000 = Duplicate key
+      if (err.code != 11000) console.log(err);
+    });
+  });
+};
