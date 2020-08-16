@@ -3,6 +3,7 @@ const factory = require('./handlerFactory');
 
 const Offer = require('../models/OfferModel');
 const TagOffer = require('./../models/tagOfferModel');
+const Tag = require('./../models/tagModel');
 
 const updateTagOffer = async (offer, tags) => {
   tags.forEach((tag) => {

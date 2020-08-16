@@ -4,9 +4,8 @@ const { restricTo, protect } = require('./../controllers/authController');
 
 const router = express.Router();
 
-router.post('/createOffer', protect, restricTo('offerer'), createOffer);
+router.route('/').get(getAllOffers).post(protect, restricTo('offerer'), createOffer);
 
-router.get('/', getAllOffers);
 router.get('/:id', getOffer);
 
 module.exports = router;

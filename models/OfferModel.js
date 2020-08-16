@@ -80,6 +80,7 @@ const offerSchema = mongoose.Schema({
   },
   salaryRange: {
     type: [Number],
+    default: void 0,
     validate: [
       {
         validator: function (arr) {
