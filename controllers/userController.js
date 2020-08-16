@@ -20,12 +20,7 @@ exports.getUser = factory.getOne(User);
 
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
-    return next(
-      new AppError(
-        'This route is not for password updates. Please use /updateMyPassword.',
-        400
-      )
-    );
+    return next(new AppError('No puede cambiar su contraseña por esta vía.', 400));
   }
 
   let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
