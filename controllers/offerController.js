@@ -1,7 +1,7 @@
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
 
-const Offer = require('../models/OfferModel');
+const Offer = require('../models/offerModel');
 const TagOffer = require('./../models/tagOfferModel');
 const Tag = require('./../models/tagModel');
 

@@ -73,7 +73,7 @@ const offerSchema = mongoose.Schema({
     type: Date,
     validate: {
       validator: function (el) {
-        return el.closingDate > el.createdAt;
+        return el > this.createdAt;
       },
       message: 'Una oferta no puede cerrar antes de ser creada.',
     },
