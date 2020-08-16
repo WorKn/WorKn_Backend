@@ -39,6 +39,7 @@ const offerSchema = mongoose.Schema({
 
   tags: {
     type: [tagSchema],
+    required: [true, 'Por favor, seleccione los tags de su oferta.'],
     validate: [
       {
         validator: function (el) {
