@@ -15,7 +15,7 @@ const tagOfferSchema = mongoose.Schema({
   },
 });
 
-tagUserSchema.index({ tag: 1, offer: 1 }, { unique: true });
+tagOfferSchema.index({ tag: 1, offer: 1 }, { unique: true });
 
 const tagOffer = mongoose.model('TagOffer', tagOfferSchema);
 
