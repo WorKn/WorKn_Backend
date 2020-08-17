@@ -71,7 +71,7 @@ const organizationSchema = new mongoose.Schema({
   },
 });
 
-userSchema.pre('save', function (next) {
+organizationSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
