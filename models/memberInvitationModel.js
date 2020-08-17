@@ -8,7 +8,6 @@ const memberInvitationSchema = new mongoose.Schema({
       },
     email:{
         type: String,
-
         validate: [validator.isEmail, 'Correo electrónico no válido, por favor, ingrese otro'],
         required: [true, 'Una invitación debe ir dirigida a una persona']
     },
@@ -41,7 +40,7 @@ memberInvitationSchema.methods.createToken = function () {
 
 memberInvitationSchema.pre('save', async function (next) { 
     this.email = await bcrypt.hash(this.email, 12); // encrypt user/target email for privacy
-    this.organization = await bcrypt.hash(this.email, 12); // encrypt organization/source email for privacy
+    this.organization = await bcrypt.hash(this.organization, 12); // encrypt organization/source email for privacy
     next();
   });
 
