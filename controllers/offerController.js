@@ -62,10 +62,12 @@ exports.editOffer = catchAsync(async (req, res, next) => {
   }
 
   if (req.user.id != offer.createdBy) {
-    if (req.user.organization && req.user.organization != offer.organization) {
-      return next(
-        new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
-      );
+    if (req.user.organization) {
+      if (req.user.organization != offer.organization) {
+        return next(
+          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+        );
+      }
     } else {
       return next(
         new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
