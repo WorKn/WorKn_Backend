@@ -1,18 +1,11 @@
 const factory = require('./handlerFactory');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const filterObj = require('./../utils/filterObj');
 
 const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
-
-const filterObj = (obj, allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
 
 exports.getAllUsers = factory.getAll(User);
 
