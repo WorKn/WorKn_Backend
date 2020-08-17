@@ -38,8 +38,9 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   //If applicant has a category and tags, delete isSignupCompleted atribute
   if (updatedUser.tags && updatedUser.category) {
     updatedUser.isSignupCompleted = undefined;
-    updatedUser.save({ validateBeforeSave: false });
   }
+
+  updatedUser.save({ validateBeforeSave: false });
 
   //Create the new TagUser records asynchronously
   if (req.user.userType === 'applicant') updateTagUser(req.user.id, tagsRef);
