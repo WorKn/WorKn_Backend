@@ -71,6 +71,11 @@ const organizationSchema = new mongoose.Schema({
   },
 });
 
+userSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
 const Organization = mongoose.model('Organization', organizationSchema);
 
 module.exports = Organization;

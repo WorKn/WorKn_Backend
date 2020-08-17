@@ -69,6 +69,7 @@ const offerSchema = mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now(),
+    select: false,
   },
   closingDate: {
     type: Date,
@@ -98,6 +99,11 @@ const offerSchema = mongoose.Schema({
       },
     ],
   },
+});
+
+userSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 const Offer = mongoose.model('Offer', offerSchema);
