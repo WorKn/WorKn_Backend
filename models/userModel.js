@@ -11,6 +11,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Por favor, provea su nombre.'],
   },
+  lastname: {
+    type: String,
+    required: [true, 'Por favor, provea su apellido.'],
+  },
+  bio: {
+    type: String,
+    maxlength: 3000,
+  },
   identificationNumber: {
     type: String,
     validate: [
