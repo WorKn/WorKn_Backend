@@ -19,16 +19,16 @@ exports.getAllUsers = factory.getAll(User);
 exports.getUser = factory.getOne(User);
 
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
+  let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
+  const tagsRef = req.body.tags;
+
   if (req.body.password || req.body.passwordConfirm) {
     return next(new AppError('No puede cambiar su contraseña por esta vía.', 400));
   }
 
-  let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
-
   if (req.user.userType === 'applicant') {
     allowedFields.push('category', 'tags');
 
-    const tags = req.body.tags;
     //Update tag's ref with their values
     req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
   }
@@ -49,7 +49,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   }
 
   //Create the new TagUser records asynchronously
-  updateTagUser(req.user.id, tags);
+  if (req.user.userType === 'applicant') updateTagUser(req.user.id, tagsRef);
 
   res.status(200).json({
     status: 'success',
