@@ -8,7 +8,7 @@ const memberInvitationSchema = new mongoose.Schema({
       },
     email:{
         type: String,
-        validate: [validator.isEmail, 'Correo electrónico no válido, por favor, ingrese otro'],
+        validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
         required: [true, 'Una invitación debe ir dirigida a una persona']
     },
     token: {
