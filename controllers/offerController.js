@@ -14,6 +14,40 @@ const updateTagOffer = async (offer, tags) => {
   });
 };
 
+const deleteTagOffer = async (offer) => {
+  TagOffer.deleteMany({ offer }, (err, result) => {
+    if (err) {
+      console.log('ERROR:\n', err);
+    } else {
+      console.log('SUCCESS: ', result.deletedCount, ' documents deleted');
+    }
+  });
+};
+
+exports.protectOffer = catchAsync(async (req, res, next) => {
+  offer = await Offer.findById(req.params.id);
+
+  if (!offer) {
+    return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
+  }
+
+  if (req.user.id != offer.createdBy) {
+    if (req.user.organization) {
+      if (req.user.organization != offer.organization) {
+        return next(
+          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+        );
+      }
+    } else {
+      return next(
+        new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+      );
+    }
+  }
+
+  next();
+});
+
 exports.createOffer = catchAsync(async (req, res, next) => {
   const tagsRef = req.body.tags;
 
@@ -40,6 +74,57 @@ exports.createOffer = catchAsync(async (req, res, next) => {
     data: {
       offer,
     },
+  });
+});
+
+exports.editOffer = catchAsync(async (req, res, next) => {
+  allowedFields = [
+    'title',
+    'description',
+    'offerType',
+    'location',
+    'category',
+    'closingDate',
+    'salaryRange',
+  ];
+
+  filteredBody = filterObj(req.body, allowedFields);
+
+  const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  updatedOffer.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      offer: updatedOffer,
+    },
+  });
+});
+
+exports.deleteOffer = catchAsync(async (req, res, next) => {
+  const deletedOffer = await Offer.findByIdAndUpdate(
+    req.params.id,
+    { state: 'deleted' },
+    {
+      new: true,
+    }
+  );
+
+  if (!deletedOffer) {
+    return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
+  }
+
+  deletedOffer.save();
+
+  deleteTagOffer(deletedOffer.id);
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
 
