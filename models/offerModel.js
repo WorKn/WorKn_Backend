@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
@@ -69,14 +68,15 @@ const offerSchema = mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now(),
+    select: false,
   },
   closingDate: {
     type: Date,
     validate: {
       validator: function (el) {
-        return el > this.createdAt;
+        return el > Date.now();
       },
-      message: 'Una oferta no puede cerrar antes de ser creada.',
+      message: 'Por favor, elija una fecha futura como fecha de cierre.',
     },
   },
   salaryRange: {
@@ -98,6 +98,11 @@ const offerSchema = mongoose.Schema({
       },
     ],
   },
+});
+
+offerSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 const Offer = mongoose.model('Offer', offerSchema);

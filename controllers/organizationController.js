@@ -1,16 +1,11 @@
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
+
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
-const factory = require('./handlerFactory');
+const filterObj = require('./../utils/filterObj');
 
-const filterObj = (obj, allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
+const factory = require('./handlerFactory');
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization) {
@@ -57,6 +52,10 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   allowedFields = ['name', 'location', 'phone', 'email'];
 
   org = await Organization.findById(req.params.id);
+  if (!org) {
+    return next(new AppError('No se ha podido encontrar la organización especificada.', 404));
+  }
+
   if (!org.RNC) {
     allowedFields.push('RNC');
   }
@@ -66,6 +65,8 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
     new: true,
     runValidators: true,
   });
+
+  updatedOrg.save();
 
   res.status(200).json({
     status: 'success',
