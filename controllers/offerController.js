@@ -1,4 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
+const filterObj = require('./../utils/filterObj');
+const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
 
 const Offer = require('../models/offerModel');
@@ -13,6 +15,30 @@ const updateTagOffer = async (offer, tags) => {
     });
   });
 };
+
+exports.protectOffer = catchAsync(async (req, res, next) => {
+  offer = await Offer.findById(req.params.id);
+
+  if (!offer) {
+    return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
+  }
+
+  if (req.user.id != offer.createdBy) {
+    if (req.user.organization) {
+      if (req.user.organization != offer.organization) {
+        return next(
+          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+        );
+      }
+    } else {
+      return next(
+        new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+      );
+    }
+  }
+
+  next();
+});
 
 exports.createOffer = catchAsync(async (req, res, next) => {
   const tagsRef = req.body.tags;
@@ -39,6 +65,34 @@ exports.createOffer = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       offer,
+    },
+  });
+});
+
+exports.editOffer = catchAsync(async (req, res, next) => {
+  allowedFields = [
+    'title',
+    'description',
+    'offerType',
+    'location',
+    'category',
+    'closingDate',
+    'salaryRange',
+  ];
+
+  filteredBody = filterObj(req.body, allowedFields);
+
+  const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  updatedOffer.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      offer: updatedOffer,
     },
   });
 });

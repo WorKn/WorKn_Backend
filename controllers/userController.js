@@ -1,18 +1,11 @@
 const factory = require('./handlerFactory');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const filterObj = require('./../utils/filterObj');
 
 const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
-
-const filterObj = (obj, allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
 
 exports.getAllUsers = factory.getAll(User);
 
@@ -45,8 +38,9 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   //If applicant has a category and tags, delete isSignupCompleted atribute
   if (updatedUser.tags && updatedUser.category) {
     updatedUser.isSignupCompleted = undefined;
-    updatedUser.save({ validateBeforeSave: false });
   }
+
+  updatedUser.save({ validateBeforeSave: false });
 
   //Create the new TagUser records asynchronously
   if (req.user.userType === 'applicant') updateTagUser(req.user.id, tagsRef);
