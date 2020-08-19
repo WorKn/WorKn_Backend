@@ -55,6 +55,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     organization: req.body.organization,
   });
 
+  newUser.sendValidationEmail();
+  await newUser.save({ validateBeforeSave: false });
+
   createSendToken(newUser, 201, res);
 });
 
@@ -97,7 +100,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   //Generate reset token and save user document
-  const resetToken = user.createPasswordResetToken();
+  const resetToken = user.generateToken('password');
   await user.save({ validateBeforeSave: false });
 
   //Send email to user
@@ -120,8 +123,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       message: 'Token sent to email.',
     });
   } catch (err) {
-    user.createPasswordResetToken = undefined;
-    user.createPasswordResetExpires = undefined;
+    user.cleanTokensArray('password');
 
     await user.save({ validateBeforeSave: false });
 
@@ -139,24 +141,60 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
+    tokens: {
+      $elemMatch: {
+        token: hashedToken,
+        tokenType: 'password',
+        expireDate: { $gt: Date.now() },
+      },
+    },
   });
 
   if (!user) {
     return next(new AppError('Token inválido o expirado', 400));
   }
 
-  //Update password and save user document
+  //Update password, clean tokens's array and save user document
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
+
+  user.cleanTokensArray('password');
 
   await user.save();
 
   //Log user in
   createSendToken(user, 200, res);
+});
+
+exports.validateEmail = catchAsync(async (req, res, next) => {
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  const user = await User.findOne({
+    tokens: {
+      $elemMatch: { token: hashedToken, tokenType: 'email' },
+    },
+  });
+
+  if (!user) {
+    return next(new AppError('Token inválido.', 400));
+  }
+
+  user.isEmailValidated = true;
+
+  user.cleanTokensArray('email');
+
+  await user.save({ validateBeforeSave: false });
+
+  //Log user in
+  createSendToken(user, 200, res);
+});
+
+exports.verifyEmailValidation = catchAsync(async (req, res, next) => {
+  if (req.user.isEmailValidated) next();
+  else
+    return next(
+      new AppError('Por favor, valide su email para poder utilizar esta función.', 401)
+    );
 });
 
 exports.updateMyPassword = catchAsync(async (req, res, next) => {
