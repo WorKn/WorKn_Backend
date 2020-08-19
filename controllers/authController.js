@@ -97,7 +97,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   //Generate reset token and save user document
-  const resetToken = user.createPasswordResetToken();
+  const resetToken = user.generateToken('password');
   await user.save({ validateBeforeSave: false });
 
   //Send email to user
@@ -120,8 +120,11 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       message: 'Token sent to email.',
     });
   } catch (err) {
-    user.createPasswordResetToken = undefined;
-    user.createPasswordResetExpires = undefined;
+    user.tokens = user.tokens.filter((el, index, arr) => {
+      return el.tokenType != 'password';
+    });
+
+    if (user.tokens.length == 0) user.tokens = undefined;
 
     await user.save({ validateBeforeSave: false });
 
@@ -139,19 +142,22 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
+    tokens: { $elemMatch: { token: hashedToken, expireDate: { $gt: Date.now() } } },
   });
 
   if (!user) {
     return next(new AppError('Token inválido o expirado', 400));
   }
 
-  //Update password and save user document
+  //Update password, clean tokens's arrary and save user document
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
+
+  user.tokens = user.tokens.filter((el, index, arr) => {
+    return el.tokenType != 'password';
+  });
+
+  if (user.tokens.length == 0) user.tokens = undefined;
 
   await user.save();
 

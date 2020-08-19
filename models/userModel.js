@@ -86,8 +86,23 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+  tokens: [
+    {
+      tokenType: {
+        type: String,
+        enum: ['email', 'password'],
+        required: true,
+      },
+      token: {
+        type: String,
+        required: true,
+      },
+      expireDate: {
+        type: Date,
+      },
+      _id: false,
+    },
+  ],
   isSignupCompleted: {
     type: Boolean,
     default: function () {
@@ -169,18 +184,27 @@ userSchema.methods.verifyPassword = async function (candidatePassword, userPassw
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.createPasswordResetToken = function () {
-  //Creating reset token
-  const resetToken = crypto.randomBytes(32).toString('hex');
+userSchema.methods.generateToken = function (tokenType) {
+  let newToken = {};
+  const token = crypto.randomBytes(32).toString('hex');
 
-  //Store the encrypted reset token in the user document
-  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  //Create a new Tokens's object
+  newToken.token = crypto.createHash('sha256').update(token).digest('hex');
 
-  //Converting to miliseconds. Reset token will expire in 10 minutes
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  //Converting to miliseconds. Reset token for passwords will expire in 10 minutes
+  if (tokenType === 'password') newToken.expireDate = Date.now() + 10 * 60 * 1000;
 
-  //Send unencrypted reset token to user
-  return resetToken;
+  newToken.tokenType = tokenType;
+
+  //Clean unwanted data in tokens.array
+  this.tokens = this.tokens.filter((el, index, arr) => {
+    return el.tokenType != tokenType;
+  });
+
+  this.tokens.push(newToken);
+
+  //Send unencrypted token
+  return token;
 };
 
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
