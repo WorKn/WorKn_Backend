@@ -93,32 +93,32 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
     orgUserEmail.push(await User.findById(memb).email);
   });
  
-  req.body.members.forEach(async(uEmail) => {
-    if(!orgUserEmail.includes(uEmail)){
+  req.body.members.forEach(async(invitedEmail) => {
+    if(!orgUserEmail.includes(invitedEmail)){
 
-      let enEmail = crypto.createHash('sha256').update(uEmail).digest('hex'); 
+      let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex'); 
 
-      var inv = await MemberInvitation.findOne({ 
-        organization: org.id, email: enEmail });
+      var inv = await MemberInvitation.deleteOne({ 
+        organization: org.id, email: encryptedEmail });
 
       const invitationToken = crypto.randomBytes(32).toString('hex'); // create
 
       var inv = await MemberInvitation.create({
         organization: org.id,
-        email: uEmail,
+        email: invitedEmail,
         token: invitationToken,
         invitedRole: "member"
       });
 
-      const newJoinLink = `${req.protocol}://${req.get(
+      const invitationLink = `${req.protocol}://${req.get(
           'host'
         )}/api/v1/users/signup/${org.id}/${invitationToken}`; // this will change
 
-      let message = `Has sido invitado a ${org.name} en WorKn, si deseas unirte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo.`;
+      let message = `Has sido invitado a ${org.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
 
       try {
         await sendEmail({      
-          email: uEmail,
+          email: invitedEmail,
           subject: `Fuiste invitado a ${org.name} en WorKn`,
           message,
         });
