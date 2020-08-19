@@ -5,6 +5,7 @@ const {
   getOffer,
   editOffer,
   protectOffer,
+  deleteOffer,
 } = require('../controllers/offerController');
 const {
   restricTo,
