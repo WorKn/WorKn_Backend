@@ -233,16 +233,20 @@ userSchema.methods.sendValidationEmail = async function () {
       message,
     });
   } catch (err) {
-    this.tokens = this.tokens.filter((el, index, arr) => {
-      return el.tokenType != 'email';
-    });
-
-    if (this.tokens.length == 0) this.tokens = undefined;
+    user.cleanTokensArray('email');
 
     await this.save({ validateBeforeSave: false });
 
     console.log(err);
   }
+};
+
+userSchema.methods.cleanTokensArray = async function (tokenType) {
+  this.tokens = this.tokens.filter((el, index, arr) => {
+    return el.tokenType != tokenType;
+  });
+
+  if (this.tokens.length == 0) this.tokens = undefined;
 };
 
 userSchema.pre('save', function (next) {

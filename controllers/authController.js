@@ -123,11 +123,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       message: 'Token sent to email.',
     });
   } catch (err) {
-    user.tokens = user.tokens.filter((el, index, arr) => {
-      return el.tokenType != 'password';
-    });
-
-    if (user.tokens.length == 0) user.tokens = undefined;
+    user.cleanTokensArray('password');
 
     await user.save({ validateBeforeSave: false });
 
@@ -162,11 +158,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
 
-  user.tokens = user.tokens.filter((el, index, arr) => {
-    return el.tokenType != 'password';
-  });
-
-  if (user.tokens.length == 0) user.tokens = undefined;
+  user.cleanTokensArray('password');
 
   await user.save();
 
@@ -189,11 +181,7 @@ exports.validateEmail = catchAsync(async (req, res, next) => {
 
   user.isEmailValidated = true;
 
-  user.tokens = user.tokens.filter((el, index, arr) => {
-    return el.tokenType != 'email';
-  });
-
-  if (user.tokens.length == 0) user.tokens = undefined;
+  user.cleanTokensArray('email');
 
   await user.save({ validateBeforeSave: false });
 
