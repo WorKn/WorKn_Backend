@@ -189,6 +189,14 @@ exports.validateEmail = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.verifyEmailValidation = catchAsync(async (req, res, next) => {
+  if (req.user.isEmailValidated) next();
+  else
+    return next(
+      new AppError('Por favor, valide su email para poder utilizar esta función.', 401)
+    );
+});
+
 exports.updateMyPassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, newPasswordConfirm } = req.body;
 
