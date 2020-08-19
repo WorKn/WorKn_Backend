@@ -16,6 +16,16 @@ const updateTagOffer = async (offer, tags) => {
   });
 };
 
+const deleteTagOffer = async (offer) => {
+  TagOffer.deleteMany({ offer }, (err, result) => {
+    if (err) {
+      console.log('ERROR:\n', err);
+    } else {
+      console.log('SUCCESS: ', result.deletedCount, ' documents deleted');
+    }
+  });
+};
+
 exports.protectOffer = catchAsync(async (req, res, next) => {
   offer = await Offer.findById(req.params.id);
 
@@ -94,6 +104,29 @@ exports.editOffer = catchAsync(async (req, res, next) => {
     data: {
       offer: updatedOffer,
     },
+  });
+});
+
+exports.deleteOffer = catchAsync(async (req, res, next) => {
+  const deletedOffer = await Offer.findByIdAndUpdate(
+    req.params.id,
+    { state: 'deleted' },
+    {
+      new: true,
+    }
+  );
+
+  if (!deletedOffer) {
+    return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
+  }
+
+  deletedOffer.save();
+
+  deleteTagOffer(deletedOffer.id);
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
 

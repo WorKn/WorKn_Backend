@@ -10,15 +10,8 @@ const { restricTo , protect} = require('./../controllers/authController');
 
 const router = express.Router();
 
-router
-  .route('/')
-  .get(getAllOrganizations)
-  .post(protect, restricTo('owner'), createOrganization);
-
-router
-    .route('/:id')
-    .get(getOrganization)
-    .patch(protect,restricTo("owner"),editOrganization);
+router.get('/', getAllOrganizations);
+router.get('/:id', getOrganization);
 
 router
   .route('/:id/members')
@@ -27,5 +20,12 @@ router
 router
   .route('/:id/members/invite')
   .post(protect, restricTo("owner", "supervisor"),sendInvitationEmail);
+
+//Protected routes
+router.use(protect, restricTo('owner'));
+
+router.post('/', createOrganization);
+router.post('/:id', editOrganization);
+
 
 module.exports = router;
