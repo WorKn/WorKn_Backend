@@ -20,10 +20,10 @@ router
 
 router
   .route('/:id/members')
-  .get(protect,restricTo("owner,supervisor,member"),getOrganization);
+  .get(protect,restricTo("owner","supervisor","member"),getOrganization);
 
 router
   .route('/:id/members/invite')
-  .post(protect, restricTo('owner','supervisor'),sendInvitationEmail);
+  .post(protect, restricTo("owner", "supervisor"),sendInvitationEmail);
 
 module.exports = router;
