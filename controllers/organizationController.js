@@ -3,6 +3,10 @@ const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handlerFactory');
+const MemberInvitation = require('../models/memberInvitationModel');
+const sendEmail = require('./../utils/email');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const filterObj = (obj, allowedFields) => {
   const newObj = {};
@@ -74,6 +78,69 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
     },
   });
 });
+
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
+
+exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
+  const orgUserEmail = [];
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
+
+  const org = await Organization.findById(req.user.organization);
+  org.members.forEach( async(memb) => {      
+    orgUserEmail.push(await User.findById(memb).email);
+  });
+ 
+  req.body.members.forEach(async(uEmail) => {
+    if(!orgUserEmail.includes(uEmail)){
+
+      let enEmail = crypto.createHash('sha256').update(uEmail).digest('hex'); 
+
+      var inv = await MemberInvitation.findOne({ 
+        organization: org.id, email: enEmail });
+
+      const invitationToken = crypto.randomBytes(32).toString('hex'); // create
+
+      var inv = await MemberInvitation.create({
+        organization: org.id,
+        email: uEmail,
+        token: invitationToken,
+        invitedRole: "member"
+      });
+
+      const newJoinLink = `${req.protocol}://${req.get(
+          'host'
+        )}/api/v1/users/signup/${org.id}/${invitationToken}`; // this will change
+
+      let message = `Has sido invitado a ${org.name} en Workn, si deseas unierte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo. `;
+
+      try {
+        await sendEmail({      
+          email: uEmail,
+          subject: `Fuiste invitado a ${org.name} en WorKn`,
+          message,
+        });
+      } catch (error) {
+        console.log(error.message);
+        return next(
+          new AppError(
+            'Ha ocurrido un error tratando de enviarle el email de restauración. Por favor, inténtelo de nuevo más atrde',
+            500
+          )
+        );
+      }; 
+    };
+  });
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: "Email sent"
+    },
+  });
+});
+    
+  
