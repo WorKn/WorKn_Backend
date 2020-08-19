@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const sendEmail = require('./../utils/email');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -216,6 +217,32 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
 
   return false;
+};
+
+userSchema.methods.sendValidationEmail = async function () {
+  validationToken = this.generateToken('email');
+  const resetURL = `/api/v1/users/validateEmail/${validationToken}`;
+
+  const message = `Para validar su email, por favor, envíe un GET request al suguiente url: ${resetURL}.\n
+  Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
+
+  try {
+    sendEmail({
+      email: this.email,
+      subject: 'Validación de email',
+      message,
+    });
+  } catch (err) {
+    this.tokens = this.tokens.filter((el, index, arr) => {
+      return el.tokenType != 'email';
+    });
+
+    if (this.tokens.length == 0) this.tokens = undefined;
+
+    await this.save({ validateBeforeSave: false });
+
+    console.log(err);
+  }
 };
 
 userSchema.pre('save', function (next) {

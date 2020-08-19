@@ -55,6 +55,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     organization: req.body.organization,
   });
 
+  newUser.sendValidationEmail();
+  await newUser.save({ validateBeforeSave: false });
+
   createSendToken(newUser, 201, res);
 });
 
@@ -142,14 +145,20 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   const user = await User.findOne({
-    tokens: { $elemMatch: { token: hashedToken, expireDate: { $gt: Date.now() } } },
+    tokens: {
+      $elemMatch: {
+        token: hashedToken,
+        tokenType: 'password',
+        expireDate: { $gt: Date.now() },
+      },
+    },
   });
 
   if (!user) {
     return next(new AppError('Token inválido o expirado', 400));
   }
 
-  //Update password, clean tokens's arrary and save user document
+  //Update password, clean tokens's array and save user document
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
 
@@ -160,6 +169,33 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (user.tokens.length == 0) user.tokens = undefined;
 
   await user.save();
+
+  //Log user in
+  createSendToken(user, 200, res);
+});
+
+exports.validateEmail = catchAsync(async (req, res, next) => {
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  const user = await User.findOne({
+    tokens: {
+      $elemMatch: { token: hashedToken, tokenType: 'email' },
+    },
+  });
+
+  if (!user) {
+    return next(new AppError('Token inválido.', 400));
+  }
+
+  user.isEmailValidated = true;
+
+  user.tokens = user.tokens.filter((el, index, arr) => {
+    return el.tokenType != 'email';
+  });
+
+  if (user.tokens.length == 0) user.tokens = undefined;
+
+  await user.save({ validateBeforeSave: false });
 
   //Log user in
   createSendToken(user, 200, res);
