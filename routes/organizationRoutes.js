@@ -9,11 +9,13 @@ const { restricTo, protect } = require('./../controllers/authController');
 
 const router = express.Router();
 
-router
-  .route('/')
-  .get(getAllOrganizations)
-  .post(protect, restricTo('owner'), createOrganization);
+router.get('/', getAllOrganizations);
+router.get('/:id', getOrganization);
 
-router.route('/:id').get(getOrganization).patch(protect, restricTo('owner'), editOrganization);
+//Protected routes
+router.use(protect, restricTo('owner'));
+
+router.post('/', createOrganization);
+router.post('/:id', editOrganization);
 
 module.exports = router;
