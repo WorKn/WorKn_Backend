@@ -21,6 +21,9 @@ router.get('/:id', getOffer);
 router.use(protect, restricTo('offerer'), verifyEmailValidation);
 
 router.post('/', createOffer);
-router.post('/', protectOffer, editOffer);
+
+router.use(protectOffer);
+
+router.route('/:id').patch(editOffer).delete(deleteOffer);
 
 module.exports = router;
