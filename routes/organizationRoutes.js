@@ -1,9 +1,11 @@
 const express = require('express');
-const { createOrganization
-  ,getAllOrganizations
-  ,getOrganization
-  ,editOrganization
-  ,sendInvitationEmail } = require('./../controllers/organizationController');
+const { 
+  createOrganization,
+  getAllOrganizations,
+  getOrganization,
+  editOrganization,
+  sendInvitationEmail
+} = require('./../controllers/organizationController');
 const { restricTo , protect} = require('./../controllers/authController');
 
 const router = express.Router();
@@ -16,7 +18,7 @@ router
 router
     .route('/:id')
     .get(getOrganization)
-    .post(protect,restricTo("owner"),editOrganization);
+    .patch(protect,restricTo("owner"),editOrganization);
 
 router
   .route('/:id/members')

@@ -194,6 +194,11 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
+userSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
