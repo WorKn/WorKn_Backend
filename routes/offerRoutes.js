@@ -5,6 +5,7 @@ const {
   getOffer,
   editOffer,
   protectOffer,
+  deleteOffer,
 } = require('../controllers/offerController');
 const { restricTo, protect } = require('./../controllers/authController');
 
@@ -14,6 +15,7 @@ router.route('/').get(getAllOffers).post(protect, restricTo('offerer'), createOf
 router
   .route('/:id')
   .get(getOffer)
-  .patch(protect, restricTo('offerer'), protectOffer, editOffer);
+  .patch(protect, restricTo('offerer'), protectOffer, editOffer)
+  .delete(protect, restricTo('offerer'), protectOffer, deleteOffer);
 
 module.exports = router;
