@@ -7,7 +7,7 @@ const MemberInvitation = require('../models/memberInvitationModel');
 const sendEmail = require('./../utils/email');
 const crypto = require('crypto');
 const filterObj = require('./../utils/filterObj');
-const factory = require('./handlerFactory');
+
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization) {
@@ -115,7 +115,7 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
           'host'
         )}/api/v1/users/signup/${org.id}/${invitationToken}`; // this will change
 
-      let message = `Has sido invitado a ${org.name} en Workn, si deseas unierte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo. `;
+      let message = `Has sido invitado a ${org.name} en WorKn, si deseas unirte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo. `;
 
       try {
         await sendEmail({      
