@@ -1,10 +1,11 @@
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
-
 const AppError = require('./../utils/appError');
+const MemberInvitation = require('../models/memberInvitationModel');
 const catchAsync = require('./../utils/catchAsync');
+const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
-
+const crypto = require('crypto');
 const factory = require('./handlerFactory');
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
@@ -35,7 +36,7 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization != req.params.id) {
     return next(
       new AppError(
-        'Usted no pertenece a esta organización, no tiene permisos para editarla',
+        'Usted no pertenece a esta organización, no tiene permisos para editarla.',
         401
       )
     );
@@ -43,7 +44,7 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   if (req.body.members) {
     return next(
       new AppError(
-        'No puedes modificar tus miembros aquí, por favor, dirígase al menú de miembros',
+        'No puedes modificar tus miembros aquí, por favor, dirígase al menú de miembros.',
         400
       )
     );
@@ -75,6 +76,68 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
     },
   });
 });
+
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
+
+exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
+  const orgUserEmail = [];
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
+
+  const org = await Organization.findById(req.user.organization);
+  org.members.forEach( async(memb) => {      
+    orgUserEmail.push(await User.findById(memb).email);
+  });
+ 
+  req.body.members.forEach(async(invitedEmail) => {
+    if(!orgUserEmail.includes(invitedEmail)){
+
+      let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex'); 
+
+      var inv = await MemberInvitation.deleteOne({ 
+        organization: org.id, email: encryptedEmail });
+
+      const invitationToken = crypto.randomBytes(32).toString('hex'); // create
+
+      var inv = await MemberInvitation.create({
+        organization: org.id,
+        email: invitedEmail,
+        token: invitationToken,
+        invitedRole: "member"
+      });
+
+      const invitationLink = `${req.protocol}://${req.get(
+          'host'
+        )}/api/v1/users/signup/${org.id}/${invitationToken}`; // this will change
+
+      let message = `Has sido invitado a ${org.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
+
+      try {
+        await sendEmail({      
+          email: invitedEmail,
+          subject: `Fuiste invitado a ${org.name} en WorKn`,
+          message,
+        });
+      } catch (error) {
+        return next(
+          new AppError(
+            'Se ha producido un error tratando de enviar el email de invitación. Por favor, inténtelo de nuevo más tarde.',
+            500
+          )
+        );
+      }; 
+    };
+  });
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: "Email sent"
+    },
+  });
+});
+    
+  
