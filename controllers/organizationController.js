@@ -24,6 +24,12 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   const owner = await User.findById(req.user.id);
   owner.organization = organization._id;
   await owner.save({ validateBeforeSave: false });
+  
+  if(req.body.members){
+    req.user = owner;
+    req.params.id = req.user.organization;
+    this.sendInvitationEmail(req,res,next);
+  }
 
   res.status(201).json({
     status: 'success',
@@ -32,6 +38,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     },
   });
 });
+
 exports.editOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization != req.params.id) {
     return next(
@@ -82,12 +89,12 @@ exports.getOrganization = factory.getOne(Organization);
 exports.getAllOrganizations = factory.getAll(Organization);
 
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
-  const orgUserEmail = [];
   if(req.user.organization != req.params.id){
     return next(
       new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
   }
 
+  const orgUserEmail = [];
   const org = await Organization.findById(req.user.organization);
   org.members.forEach( async(memb) => {      
     orgUserEmail.push(await User.findById(memb).email);
@@ -95,7 +102,6 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
  
   req.body.members.forEach(async(invitedEmail) => {
     if(!orgUserEmail.includes(invitedEmail)){
-
       let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex'); 
 
       var inv = await MemberInvitation.deleteOne({ 
@@ -132,12 +138,16 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
       }; 
     };
   });
-  res.status(200).json({
-    status: 'success',
-    data: {
-      message: "Email sent"
-    },
-  });
+  if(req.url.includes("members/invite")){
+    res.status(200).json({
+      status: 'success',
+      data: {
+        message: "Email sent"
+      },
+    });
+  }
+  
+
 });
     
   
