@@ -11,6 +11,11 @@ exports.getAllUsers = factory.getAll(User);
 
 exports.getUser = factory.getOne(User);
 
+exports.getMe = catchAsync(async (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+});
+
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
   let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
   const tagsRef = req.body.tags;
