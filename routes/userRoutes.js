@@ -5,10 +5,11 @@ const {
   forgotPassword,
   resetPassword,
   protect,
-  updatePassword,
+  updateMyPassword,
   logout,
+  validateEmail,
 } = require('./../controllers/authController');
-const { getAllUsers, getUser } = require('./../controllers/userController');
+const { getAllUsers, getUser, updateMyProfile } = require('./../controllers/userController');
 const router = express.Router();
 
 //Routes
@@ -19,12 +20,15 @@ router.get('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 
+router.patch('/validateEmail/:token', validateEmail);
+
 router.get('/', getAllUsers);
 router.get('/:id', getUser);
 
 //Protected routes
 router.use(protect);
 
-router.patch('/updatePassword/', updatePassword);
+router.patch('/updateMyPassword', updateMyPassword);
+router.patch('/updateMyProfile', updateMyProfile);
 
 module.exports = router;
