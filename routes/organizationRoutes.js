@@ -4,12 +4,14 @@ const {
   getAllOrganizations,
   getOrganization,
   editOrganization,
+  getMyOrganization,
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
 
 const router = express.Router();
 
 router.get('/', getAllOrganizations);
+router.get('/myOrganization', protect, getMyOrganization, getOrganization);
 router.get('/:id', getOrganization);
 
 //Protected routes
