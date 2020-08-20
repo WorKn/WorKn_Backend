@@ -104,8 +104,6 @@ const fieldsHandler = (Model, query, req) => {
         query.populate({ path: 'members' });
       }
       break;
-    case value:
-      break;
 
     default:
       break;

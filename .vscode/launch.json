@@ -12,6 +12,7 @@
       "request": "launch",
       "restart": true,
       "runtimeExecutable": "nodemon",
+      "env": { "NODE_ENV": "development" },
       "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node"
     }
