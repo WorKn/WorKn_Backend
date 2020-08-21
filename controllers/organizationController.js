@@ -141,20 +141,23 @@ exports.updateMemberRole = catchAsync(async(req,res,next)=>{
     return next(
       new AppError("Usted no pertenece a esta organización, no puede modificar los miembros.",401));
   }
-  allowedFields = ['organizationRole'];
-  filteredBody = filterObj(req.body, allowedFields);
+  member = await User.findById(req.body.member.id);
+  if(member.organizationRole=="owner"){
+    return next(
+      new AppError("Esta no es la vía para cambiar el dueño de la organización, no es posible revocar la posición de dueño desde aquí.",401));
+  }
+  if(req.body.organizationRole=="owner"){
+    return next(
+      new AppError("Esta no es la vía para cambiar el dueño de la organización, no es posible convertir un miembro de la organización en dueño desde aquí.",401));
+  }
 
-  const updatedMember = await User.findByIdAndUpdate(req.body.member.id, filteredBody, {
-    new: true,
-    runValidators: true
-  });
-
-  updatedMember.save({validateBeforeSave: false});
+  member.organizationRole=req.body.organizationRole;
+  member.save({validateBeforeSave: false});
 
   res.status(200).json({
     status: 'success',
     data: {
-      organization: updatedMember,
+      organization: member,
     },
   });
 });
