@@ -146,7 +146,7 @@ const userSchema = new mongoose.Schema({
   },
   organizationRole: {
     type: String,
-    enum: ['owner', 'admin', 'member'],
+    enum: ['owner', 'supervisor', 'member'],
   },
   isActive: {
     type: Boolean,

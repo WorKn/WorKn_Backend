@@ -5,7 +5,8 @@ const {
   getOrganization,
   editOrganization,
   getMyOrganization,
-  sendInvitationEmail
+  sendInvitationEmail,
+  updateMemberRole
 } = require('./../controllers/organizationController');
 const { restricTo , protect} = require('./../controllers/authController');
 
@@ -17,8 +18,9 @@ router.get('/:id', getOrganization);
 
 router
   .route('/:id/members')
-  .get(protect,restricTo("owner","supervisor","member"),getOrganization);
-
+  .get(protect,restricTo("owner","supervisor","member"),getOrganization)
+  .post(protect,restricTo("supervisor","owner"),updateMemberRole);
+  
 router
   .route('/:id/members/invite')
   .post(protect, restricTo("owner", "supervisor"),sendInvitationEmail);

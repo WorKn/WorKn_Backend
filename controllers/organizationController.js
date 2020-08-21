@@ -136,6 +136,29 @@ exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
 
+exports.updateMemberRole = catchAsync(async(req,res,next)=>{
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede modificar los miembros.",401));
+  }
+  allowedFields = ['organizationRole'];
+  filteredBody = filterObj(req.body, allowedFields);
+
+  const updatedMember = await User.findByIdAndUpdate(req.body.member.id, filteredBody, {
+    new: true,
+    runValidators: true
+  });
+
+  updatedMember.save({validateBeforeSave: false});
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedMember,
+    },
+  });
+});
+
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
   if(req.user.organization != req.params.id){
     return next(
