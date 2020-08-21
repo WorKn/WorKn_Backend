@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const sendEmail = require('./../utils/email');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -11,8 +12,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Por favor, provea su nombre.'],
   },
+  lastname: {
+    type: String,
+    required: [true, 'Por favor, provea su apellido.'],
+  },
+  bio: {
+    type: String,
+    maxlength: 3000,
+  },
   identificationNumber: {
     type: String,
+    select: false,
     validate: [
       {
         validator: validator.isNumeric,
@@ -28,6 +38,7 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
+    select: false,
     validate: [
       validator.isNumeric,
       'El número telefónico debe poseer solo caracteres numéricos.',
@@ -49,17 +60,23 @@ const userSchema = new mongoose.Schema({
     },
     required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
   },
-  chats: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: 'Chat',
-    },
-  ],
+  chats: {
+    type: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Chat',
+      },
+    ],
+    select: false,
+  },
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',
   },
-  location: locationSchema,
+  location: {
+    type: locationSchema,
+    select: false,
+  },
   password: {
     type: String,
     required: [true, 'Por favor, provea una contraseña.'],
@@ -78,8 +95,26 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+  tokens: {
+    type: [
+      {
+        tokenType: {
+          type: String,
+          enum: ['email', 'password'],
+          required: true,
+        },
+        token: {
+          type: String,
+          required: true,
+        },
+        expireDate: {
+          type: Date,
+        },
+        _id: false,
+      },
+    ],
+    select: false,
+  },
   isSignupCompleted: {
     type: Boolean,
     default: function () {
@@ -123,18 +158,20 @@ const userSchema = new mongoose.Schema({
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
     default: void 0,
-    validate: {
-      validator: function (el) {
-        return el.length < 11;
+    validate: [
+      {
+        validator: function (el) {
+          return el.length < 5;
+        },
+        message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
       },
-      message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
-    },
-    validate: {
-      validator: function (el) {
-        return el.length > 2;
+      {
+        validator: function (el) {
+          return el.length > 2;
+        },
+        message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
       },
-      message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
-    },
+    ],
   },
 });
 
@@ -161,18 +198,27 @@ userSchema.methods.verifyPassword = async function (candidatePassword, userPassw
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.createPasswordResetToken = function () {
-  //Creating reset token
-  const resetToken = crypto.randomBytes(32).toString('hex');
+userSchema.methods.generateToken = function (tokenType) {
+  let newToken = {};
+  const token = crypto.randomBytes(32).toString('hex');
 
-  //Store the encrypted reset token in the user document
-  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  //Create a new Tokens's object
+  newToken.token = crypto.createHash('sha256').update(token).digest('hex');
 
-  //Converting to miliseconds. Reset token will expire in 10 minutes
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  //Converting to miliseconds. Reset token for passwords will expire in 10 minutes
+  if (tokenType === 'password') newToken.expireDate = Date.now() + 10 * 60 * 1000;
 
-  //Send unencrypted reset token to user
-  return resetToken;
+  newToken.tokenType = tokenType;
+
+  //Clean unwanted data in tokens.array
+  this.tokens = this.tokens.filter((el, index, arr) => {
+    return el.tokenType != tokenType;
+  });
+
+  this.tokens.push(newToken);
+
+  //Send unencrypted token
+  return token;
 };
 
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
@@ -185,6 +231,41 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 
   return false;
 };
+
+userSchema.methods.sendValidationEmail = async function () {
+  validationToken = this.generateToken('email');
+  const resetURL = `/api/v1/users/validateEmail/${validationToken}`;
+
+  const message = `Para validar su email, por favor, envíe un GET request al suguiente url: ${resetURL}.\n
+  Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
+
+  try {
+    sendEmail({
+      email: this.email,
+      subject: 'Validación de email',
+      message,
+    });
+  } catch (err) {
+    user.cleanTokensArray('email');
+
+    await this.save({ validateBeforeSave: false });
+
+    console.log(err);
+  }
+};
+
+userSchema.methods.cleanTokensArray = async function (tokenType) {
+  this.tokens = this.tokens.filter((el, index, arr) => {
+    return el.tokenType != tokenType;
+  });
+
+  if (this.tokens.length == 0) this.tokens = undefined;
+};
+
+userSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 

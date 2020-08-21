@@ -1,9 +1,11 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
+const offerRouter = require('./routes/offerRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -18,13 +20,15 @@ app.use(cors());
 //Development logging
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
-//Body parser (reading data from body into req.body. Limit data size.)
+//Body parser (reading data from body and cookies into req.body and req.cookies, limit data size)
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 //---Routes---
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/organizations', organizationRouter);
+app.use('/api/v1/offers', offerRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {

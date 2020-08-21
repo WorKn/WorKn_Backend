@@ -12,14 +12,14 @@ const dotenv = require('dotenv');
 dotenv.config({ path: './.env' });
 
 //Set Database host
-let DB = '';
+let DB = process.env.DATABASE_HOST_LOCAL;
 
-if (process.env.NODE_ENV === 'development') {
-  DB = process.env.DATABASE_HOST_LOCAL;
-} else if (process.env.NODE_ENV === 'staging') {
-  DB = process.env.DATABASE_HOST.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
-  DB = DB.replace('<DATABASE_NAME>', process.env.DATABASE_NAME);
-}
+// if (process.env.NODE_ENV === 'development') {
+//   DB = process.env.DATABASE_HOST_LOCAL;
+// } else if (process.env.NODE_ENV === 'staging') {
+//   DB = process.env.DATABASE_HOST.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
+//   DB = DB.replace('<DATABASE_NAME>', process.env.DATABASE_NAME);
+// }
 
 //Establish database connection
 module.exports = mongoose

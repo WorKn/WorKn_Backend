@@ -1,156 +1,208 @@
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
+const MemberInvitation = require('../models/memberInvitationModel');
 const catchAsync = require('./../utils/catchAsync');
-const nodemailer = require('nodemailer');
+const sendEmail = require('./../utils/email');
+const filterObj = require('./../utils/filterObj');
+const crypto = require('crypto');
+const factory = require('./handlerFactory');
 
-//restore my prev version :) 
+
+sendInviteEmail = async(organization,members,req,next) => {
+  const orgUserEmail = [];
+  console.log(organization);
+  try{
+    organization.members.forEach( async(memb) => {      
+      orgUserEmail.push(await User.findById(memb).email);
+    });
+  }catch{};
+  
+  members.forEach(async(invitedEmail) => {
+    if(!orgUserEmail.includes(invitedEmail)){
+      let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex'); 
+
+      var invitation = await MemberInvitation.deleteOne({ 
+        organization: organization.id, email: encryptedEmail });
+      const invitationToken = crypto.randomBytes(32).toString('hex'); // create
+
+      var invitation = await MemberInvitation.create({
+        organization: organization.id,
+        email: invitedEmail,
+        token: invitationToken,
+        invitedRole: "member"
+      });
+
+      const invitationLink = `${req.protocol}://${req.get(
+          'host'
+        )}/api/v1/users/signup/${organization.id}/${invitationToken}`; // this will change
+
+      let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
+      try {
+        await sendEmail({      
+          email: invitedEmail,
+          subject: `Fuiste invitado a ${organization.name} en WorKn`,
+          message,
+        });
+      } catch (error) {
+        return next(
+          new AppError(
+            'Se ha producido un error tratando de enviar el email de invitación. Por favor, inténtelo de nuevo más tarde.',
+            500
+          )
+        );
+      }; 
+    };
+  }); 
+};
 exports.createOrganization = catchAsync(async (req, res, next) => {
-    try {
-        if(req.user.organization){
-            return next(new AppError("Usted ya posee una organización asociada.",400));
-        }
-            
-        const organization = await Organization.create({
-          name: req.body.name,
-          RNC: req.body.RNC,
-          location: req.body.location,
-          phone: req.body.phone,
-          email: req.body.email,
-          members: [req.user.id],
-        });
-        const owner = await User.findById(req.user.id);
-        owner.organization = organization._id;
-        await owner.save({validateBeforeSave: false});
-        
-        res.status(201).json({
-            status: 'success',
-            data: {
-                organization,
-            },
-        });
-    } catch (error) {
-        res.status(404).json({
-            status: 'fail',
-            message: error
-        });
-    }   
-    
+  if (req.user.organization) {
+    return next(new AppError('Usted ya posee una organización asociada.', 400));
+  }
+
+  const organization = await Organization.create({
+    name: req.body.name,
+    RNC: req.body.RNC,
+    location: req.body.location,
+    phone: req.body.phone,
+    email: req.body.email,
+    members: [req.user.id],
+  });
+  const owner = await User.findById(req.user.id);
+  owner.organization = organization._id;
+  await owner.save({ validateBeforeSave: false });
+  
+  if(req.body.members){
+    sendInviteEmail(organization,req.body.members,req,next);
+  }
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      organization,
+    },
+  });
 });
 
-exports.getOrganization = catchAsync(async (req, res, next) =>{
+exports.editOrganization = catchAsync(async (req, res, next) => {
+  if (req.user.organization != req.params.id) {
+    return next(
+      new AppError(
+        'Usted no pertenece a esta organización, no tiene permisos para editarla.',
+        401
+      )
+    );
+  }
+  if (req.body.members) {
+    return next(
+      new AppError(
+        'No puedes modificar tus miembros aquí, por favor, dirígase al menú de miembros.',
+        400
+      )
+    );
+  }
 
-    const organization = await Organization.findById(req.params.id);
-    res.status(200).json({
-        status: 'success',
-        data: {
-            organization,
-        },
-    });
+  allowedFields = ['name', 'location', 'phone', 'email'];
+
+  org = await Organization.findById(req.params.id);
+  if (!org) {
+    return next(new AppError('No se ha podido encontrar la organización especificada.', 404));
+  }
+
+  if (!org.RNC) {
+    allowedFields.push('RNC');
+  }
+  filteredBody = filterObj(req.body, allowedFields);
+
+  const updatedOrg = await Organization.findByIdAndUpdate(req.params.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  updatedOrg.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedOrg,
+    },
+  });
+});
+
+exports.getMyOrganization = catchAsync(async (req, res, next) => {
+  req.params.id = req.user.organization;
+  next();
+});
+
+exports.addOrganizationMember = catchAsync(async (req, res, next) => {       
+  try {
+      if(req.user.organization != req.params.id){
+          return next(
+              new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+      }
+      const originOrg = await Organization.findById(req.params.id).select("+members");
+      req.body.members.forEach(async(member) => {
+          if(!originOrg.members.includes(member)){
+              originOrg.members.push(member);
+              
+          }
+      });
+      const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
+          new: true,
+          runValidators: true
+      }).select("+members");
+ 
+      res.status(201).json({
+          status: 'success',
+          data: {
+              organization,
+          },
+      });
+  } catch (err) {
+      res.status(404).json({
+          status: 'fail',
+          message: err.message
+      });
+  }  
+});
+
+exports.getOrganization = factory.getOne(Organization);
+
+exports.getAllOrganizations = factory.getAll(Organization);
+
+exports.validateMemberInvitation = catchAsync(async(req,res,next)=>{
+  encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  console.log(encryptedToken);
+  var invitation = await MemberInvitation.findOne({ 
+    token: encryptedToken });
+  if(invitation && invitation.expirationDate> Date.now()){
+      return next();
+  }
+  return next(
+    new AppError("Token inválido, acceso denegado.",403));
 
 });
 
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
+  const org = await Organization.findById(req.user.organization);
+  sendInviteEmail(org,req.body.members,req,next)
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: "Email sent"
+    },
+  });
+});
+
+exports.updateMemberRole = catchAsync(async(req, res,next) => {
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
     
-    const orgUserEmail = [];
-    if(req.user.organization != req.params.id){
-        return next(
-            new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
-    }
-
-    const org = await Organization.findById(req.params.id);
-    org.members.forEach( async(memb) => {      
-        orgUserEmail.push(await User.findById(memb).email);
-    });
-
-
-    req.body.members.forEach(async(element) => {
-        if(!orgUserEmail.includes(element)){
-
-            var transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                user: 'soporte.worknrd@gmail.com',
-                pass: 'worknrd0608'
-                }
-            });
-            
-            /*
-            const joinReq = MemberInvitation.create();
-            token = joinReq.createToken();
-
-            joinReq.Token = crypto.createHash('sha256').update(token).digest('hex');
-            //120 min
-            joinReq.ExpireDate = Date.now() + 120 * 60 * 1000;
-            */
-
-            const newJoinLink = `${req.protocol}://${req.get(
-                'host'
-              )}/api/v1/users/signup/${org.id}`;
-            var mailOptions = {
-                from: 'soporte.worknrd@gmail.com',
-                to: element,
-                subject: `Fuiste invitado a ${org.name} en WorKn`,
-                text: `Has sido invitado a ${org.name} en Workn, si deseas unierte accede a ${newJoinLink}, de lo contrario, por favor, ignore este correo `
-            };
-            
-            transporter.sendMail(mailOptions, function(error, info){
-                if (error) {
-                console.log(error);
-                } else {
-                console.log('Email sent: ' + info.response);
-                }
-            });
-        }
-    });
-
-    res.status(201).json({
-        status: 'success',
-        data: {
-            message: "email sent to"
-        },
-    });
-});
-//It will be signupMember
-//ValidateToken->membersignup (validated)-> add organization =>>> all this is in a new endpoint alone (NOT REGULAR SIGNUP)
-exports.addOrganizationMember = catchAsync(async (req, res, next) => {
-        
-    try {
-        if(req.user.organization != req.params.id){
-            return next(
-                new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
-        }
-        const originOrg = await Organization.findById(req.params.id);
-        /*
-        req.body.members.forEach(async(element) => {
-            if(!originOrg.members.includes(element)){
-                originOrg.members.push(element);
-            }
-        });
-        */
-        const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
-            new: true,
-            runValidators: true
-        });
-   
-        res.status(201).json({
-            status: 'success',
-            data: {
-                organization,
-            },
-        });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }  
-});
-
-exports.viewOrganizationMember = catchAsync(async (req, res, next) => {
-
-});
-
-exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
-
 });
