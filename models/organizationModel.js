@@ -48,6 +48,7 @@ const organizationSchema = new mongoose.Schema({
       },
     ],
     required: true,
+    select: false,
     validate: {
       validator: function (el) {
         return el.length > 0;
@@ -69,6 +70,11 @@ const organizationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+});
+
+organizationSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 const Organization = mongoose.model('Organization', organizationSchema);

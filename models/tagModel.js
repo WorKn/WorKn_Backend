@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const categorySchema = require('./categorySchema');
+const categorySchema = require('../schemas/sharedCategorySchema');
 
 const tagSchema = mongoose.Schema({
   name: {
@@ -8,7 +8,10 @@ const tagSchema = mongoose.Schema({
     lowercase: true,
     unique: true,
   },
-  category: categorySchema,
+  category: {
+    type: categorySchema,
+    _id: false,
+  },
 });
 
 const Tag = mongoose.model('Tag', tagSchema);

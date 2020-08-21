@@ -23,7 +23,7 @@ const createSendToken = (user, statusCode, res) => {
   };
 
   if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
-    cookieOptions.secure = true;
+    cookieOptions.secure = false; //Remember change this to true when Https be available
   }
 
   res.cookie('jwt', token, cookieOptions);
@@ -45,6 +45,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   const newUser = await User.create({
     name: req.body.name,
+    lastname: req.body.lastname,
     email: req.body.email,
     birthday: req.body.birthday,
     password: req.body.password,
@@ -53,6 +54,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     organizationRole: req.body.organizationRole,
     organization: req.body.organization,
   });
+
+  newUser.sendValidationEmail();
+  await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
 });
@@ -73,6 +77,16 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({
+    status: 'success',
+  });
+};
+
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
 
@@ -86,7 +100,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   //Generate reset token and save user document
-  const resetToken = user.createPasswordResetToken();
+  const resetToken = user.generateToken('password');
   await user.save({ validateBeforeSave: false });
 
   //Send email to user
@@ -109,8 +123,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       message: 'Token sent to email.',
     });
   } catch (err) {
-    user.createPasswordResetToken = undefined;
-    user.createPasswordResetExpires = undefined;
+    user.cleanTokensArray('password');
 
     await user.save({ validateBeforeSave: false });
 
@@ -128,19 +141,24 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
+    tokens: {
+      $elemMatch: {
+        token: hashedToken,
+        tokenType: 'password',
+        expireDate: { $gt: Date.now() },
+      },
+    },
   });
 
   if (!user) {
     return next(new AppError('Token inválido o expirado', 400));
   }
 
-  //Update password and save user document
+  //Update password, clean tokens's array and save user document
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
+
+  user.cleanTokensArray('password');
 
   await user.save();
 
@@ -148,7 +166,38 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-exports.updatePassword = catchAsync(async (req, res, next) => {
+exports.validateEmail = catchAsync(async (req, res, next) => {
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  const user = await User.findOne({
+    tokens: {
+      $elemMatch: { token: hashedToken, tokenType: 'email' },
+    },
+  });
+
+  if (!user) {
+    return next(new AppError('Token inválido.', 400));
+  }
+
+  user.isEmailValidated = true;
+
+  user.cleanTokensArray('email');
+
+  await user.save({ validateBeforeSave: false });
+
+  //Log user in
+  createSendToken(user, 200, res);
+});
+
+exports.verifyEmailValidation = catchAsync(async (req, res, next) => {
+  if (req.user.isEmailValidated) next();
+  else
+    return next(
+      new AppError('Por favor, valide su email para poder utilizar esta función.', 401)
+    );
+});
+
+exports.updateMyPassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, newPasswordConfirm } = req.body;
 
   const user = await User.findById(req.user.id).select('+password');
@@ -174,6 +223,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   //If token does not exist, then the user its not logged in
@@ -193,7 +244,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!currentUser) {
     return next(new AppError('El usuario ya no existe.', 401));
   }
-
+  
   //Check if user changed password after token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(

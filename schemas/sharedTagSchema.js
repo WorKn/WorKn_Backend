@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const categorySchema = require('./categorySchema');
+const categorySchema = require('./sharedCategorySchema');
 
 const tagSchema = mongoose.Schema({
   name: {
