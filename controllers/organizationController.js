@@ -11,7 +11,6 @@ const factory = require('./handlerFactory');
 
 sendInviteEmail = async(organization,members,req,next) => {
   const orgUserEmail = [];
-  console.log(organization);
   try{
     organization.members.forEach( async(memb) => {      
       orgUserEmail.push(await User.findById(memb).email);
@@ -134,13 +133,43 @@ exports.getMyOrganization = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.addOrganizationMember = catchAsync(async (req, res, next) => {       
+    if(req.user.organization != req.params.id){
+        return next(
+            new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+    }
+    const originOrg = await Organization.findById(req.params.id).select("+members");
+
+    for(member of req.body.members){
+      if(!originOrg.members.includes(member)){
+        potentialMember = await User.findById(member); 
+        if(potentialMember.organization!=req.params.id){
+          return next(
+            new AppError("Uno o más usuarios no están registrados con la organización, no se pueden agregar a la misma",401));
+        };
+        await originOrg.members.push(member);             
+      }
+    }
+    
+    const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
+        new: true,
+        runValidators: true
+    }).select("+members");
+
+    res.status(201).json({
+        status: 'members added',
+        data: {
+            organization,
+        },
+    });
+});
+
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
 
 exports.validateMemberInvitation = catchAsync(async(req,res,next)=>{
   encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  console.log(encryptedToken);
   var invitation = await MemberInvitation.findOne({ 
     token: encryptedToken });
   if(invitation && invitation.expirationDate> Date.now()){
@@ -205,5 +234,11 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
     },
   });
 });
+
+exports.updateMemberRole = catchAsync(async(req, res,next) => {
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
     
-  
+});

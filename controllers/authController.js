@@ -244,7 +244,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!currentUser) {
     return next(new AppError('El usuario ya no existe.', 401));
   }
-
+  
   //Check if user changed password after token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
@@ -260,11 +260,12 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.restricTo = (...admittedRoles) => {
+ 
   return (req, res, next) => {
-    if (
-      !admittedRoles.includes(req.user.userType) &&
-      !admittedRoles.includes(req.user.organizationRole)
-    ) {
+    if ( 
+      !admittedRoles.includes(req.user.userType) && 
+      !admittedRoles.includes(req.user.organizationRole)) 
+      {
       return next(
         new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
       );
