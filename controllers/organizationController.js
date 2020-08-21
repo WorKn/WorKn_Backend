@@ -149,6 +149,45 @@ exports.validateMemberInvitation = catchAsync(async(req,res,next)=>{
   return next(
     new AppError("Token inválido, acceso denegado.",403));
 
+exports.updateMemberRole = catchAsync(async(req,res,next)=>{
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError(
+        "Usted no pertenece a esta organización, no puede modificar los miembros.",
+        401
+      )
+    );
+  }
+
+  member = await User.findById(req.body.member.id);
+  if(member.organizationRole=="owner"){
+    return next(
+      new AppError(
+        "Esta no es la vía para cambiar el dueño de la organización, "+ 
+        "no es posible revocar la posición de dueño desde aquí.",
+        401
+      )
+    );
+  }
+  if(req.body.organizationRole=="owner"){
+    return next(
+      new AppError(
+        "Esta no es la vía para cambiar el dueño de la organización, "+ 
+        "no es posible convertir un miembro de la organización en dueño desde aquí.",
+        401
+      )
+    );
+  }
+
+  member.organizationRole=req.body.organizationRole;
+  member.save({validateBeforeSave: false});
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: member,
+    },
+  });
 });
 
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
