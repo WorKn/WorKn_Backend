@@ -9,7 +9,12 @@ const {
   logout,
   validateEmail,
 } = require('./../controllers/authController');
-const { getAllUsers, getUser, updateMyProfile } = require('./../controllers/userController');
+const {
+  getAllUsers,
+  getUser,
+  updateMyProfile,
+  getMe,
+} = require('./../controllers/userController');
 const router = express.Router();
 
 //Routes
@@ -23,6 +28,7 @@ router.patch('/resetPassword/:token', resetPassword);
 router.patch('/validateEmail/:token', validateEmail);
 
 router.get('/', getAllUsers);
+router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
 
 //Protected routes

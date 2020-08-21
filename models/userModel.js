@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
   },
   identificationNumber: {
     type: String,
+    select: false,
     validate: [
       {
         validator: validator.isNumeric,
@@ -37,6 +38,7 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
+    select: false,
     validate: [
       validator.isNumeric,
       'El número telefónico debe poseer solo caracteres numéricos.',
@@ -58,17 +60,23 @@ const userSchema = new mongoose.Schema({
     },
     required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
   },
-  chats: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: 'Chat',
-    },
-  ],
+  chats: {
+    type: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Chat',
+      },
+    ],
+    select: false,
+  },
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',
   },
-  location: locationSchema,
+  location: {
+    type: locationSchema,
+    select: false,
+  },
   password: {
     type: String,
     required: [true, 'Por favor, provea una contraseña.'],
@@ -87,23 +95,26 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
-  tokens: [
-    {
-      tokenType: {
-        type: String,
-        enum: ['email', 'password'],
-        required: true,
+  tokens: {
+    type: [
+      {
+        tokenType: {
+          type: String,
+          enum: ['email', 'password'],
+          required: true,
+        },
+        token: {
+          type: String,
+          required: true,
+        },
+        expireDate: {
+          type: Date,
+        },
+        _id: false,
       },
-      token: {
-        type: String,
-        required: true,
-      },
-      expireDate: {
-        type: Date,
-      },
-      _id: false,
-    },
-  ],
+    ],
+    select: false,
+  },
   isSignupCompleted: {
     type: Boolean,
     default: function () {
@@ -147,18 +158,20 @@ const userSchema = new mongoose.Schema({
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
     default: void 0,
-    validate: {
-      validator: function (el) {
-        return el.length < 11;
+    validate: [
+      {
+        validator: function (el) {
+          return el.length < 5;
+        },
+        message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
       },
-      message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
-    },
-    validate: {
-      validator: function (el) {
-        return el.length > 2;
+      {
+        validator: function (el) {
+          return el.length > 2;
+        },
+        message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
       },
-      message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
-    },
+    ],
   },
 });
 

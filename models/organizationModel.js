@@ -48,6 +48,7 @@ const organizationSchema = new mongoose.Schema({
       },
     ],
     required: true,
+    select: false,
     validate: {
       validator: function (el) {
         return el.length > 0;
