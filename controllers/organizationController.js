@@ -251,8 +251,8 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
   
   member.organizationRole = undefined;
   member.organization = undefined;
+  member.isActive = false;
   member.email = undefined;
-  
   member.save({ validateBeforeSave: false });
 
   const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
