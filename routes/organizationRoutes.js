@@ -6,10 +6,10 @@ const {
   editOrganization,
   getMyOrganization,
   sendInvitationEmail,
-  updateMemberRole,
   addOrganizationMember,
   validateMemberInvitation,
-  updateMemberRole
+  updateMemberRole,
+  removeOrganizationMember
 } = require('./../controllers/organizationController');
 const { restricTo , protect} = require('./../controllers/authController');
 
@@ -34,7 +34,8 @@ router
 router
   .route('/:id/members')
   .get(restricTo("owner","supervisor","member"),getOrganization)
-  .post(restricTo("supervisor","owner"),updateMemberRole);
+  .post(restricTo("supervisor","owner"),updateMemberRole)
+  .delete(restricTo("supervisor","owner"),removeOrganizationMember);
   
 router
   .route('/:id/members/add')
