@@ -38,14 +38,6 @@ memberInvitationSchema.pre('save', async function (next) {
     next();
   });
 
-memberInvitationSchema.methods.validateToken = async function (candidateToken) {
-    encryptedIncomming = crypto.createHash('sha256').update(candidateToken).digest('hex');
-    result = false;
-    if(encryptedIncomming == this.token){
-        result = true;
-    }
-    return result;
-};
 const MemberInvitation = mongoose.model('MemberInvitation', memberInvitationSchema);
 
 module.exports = MemberInvitation;

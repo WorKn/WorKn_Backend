@@ -11,16 +11,19 @@ const factory = require('./handlerFactory');
 
 sendInviteEmail = async(organization,members,req,next) => {
   const orgUserEmail = [];
-  organization.members.forEach( async(memb) => {      
-    orgUserEmail.push(await User.findById(memb).email);
-  });
+  console.log(organization);
+  try{
+    organization.members.forEach( async(memb) => {      
+      orgUserEmail.push(await User.findById(memb).email);
+    });
+  }catch{};
+  
   members.forEach(async(invitedEmail) => {
     if(!orgUserEmail.includes(invitedEmail)){
       let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex'); 
 
       var invitation = await MemberInvitation.deleteOne({ 
         organization: organization.id, email: encryptedEmail });
-
       const invitationToken = crypto.randomBytes(32).toString('hex'); // create
 
       var invitation = await MemberInvitation.create({
@@ -35,7 +38,6 @@ sendInviteEmail = async(organization,members,req,next) => {
         )}/api/v1/users/signup/${organization.id}/${invitationToken}`; // this will change
 
       let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
-
       try {
         await sendEmail({      
           email: invitedEmail,
@@ -135,6 +137,19 @@ exports.getMyOrganization = catchAsync(async (req, res, next) => {
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);
+
+exports.validateMemberInvitation = catchAsync(async(req,res,next)=>{
+  encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  console.log(encryptedToken);
+  var invitation = await MemberInvitation.findOne({ 
+    token: encryptedToken });
+  if(invitation && invitation.expirationDate> Date.now()){
+      return next();
+  }
+  return next(
+    new AppError("Token inválido, acceso denegado.",403));
+
+});
 
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
   if(req.user.organization != req.params.id){
