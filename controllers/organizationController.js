@@ -7,6 +7,7 @@ const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const crypto = require('crypto');
 const factory = require('./handlerFactory');
+const { isUndefined } = require('util');
 
 
 sendInviteEmail = async(organization,members,req,next) => {
@@ -177,6 +178,7 @@ exports.validateMemberInvitation = catchAsync(async(req,res,next)=>{
   }
   return next(
     new AppError("Token inválido, acceso denegado.",403));
+});
 
 exports.updateMemberRole = catchAsync(async(req,res,next)=>{
   if(req.user.organization != req.params.id){
@@ -219,6 +221,54 @@ exports.updateMemberRole = catchAsync(async(req,res,next)=>{
   });
 });
 
+exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
+  if(req.user.organization != req.params.id){
+    return next(
+      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
+  }
+  const member = await User.findById(req.body.id);
+  const originOrg = await Organization.findById(req.params.id).select("+members");
+  if(!originOrg.members.includes(member.id)){
+    return next(
+      new AppError("Este usuario no pertenece a esta organización",401));
+  }
+  if(req.user.organizationRole=="supervisor"  && 
+    (member.organizationRole=="owner" || 
+    member.organizationRole=="supervisor")) {
+      return next(
+        new AppError("Usted solo puede eliminar miembros con rango menor al suyo.",401));
+  }
+
+  if(member==req.user){
+    return next(
+      new AppError("Usted no se puede eliminar a su mismo, mediante esta opción.",401));
+  }
+  
+  const index = originOrg.members.indexOf(member.id);
+  if (index > -1) {
+    originOrg.members.splice(index, 1);
+  }
+  
+  member.organizationRole = undefined;
+  member.organization = undefined;
+  member.isActive = false;
+  member.email = undefined;
+  member.save({ validateBeforeSave: false });
+
+  const organization = await Organization.findByIdAndUpdate(req.params.id,originOrg, {
+      new: true,
+      runValidators: true
+  }).select("+members");
+  organization.save({ validateBeforeSave: false });
+  
+  res.status(201).json({
+      status: 'success',
+      data: {
+          organization,
+      },
+  });
+});  
+
 exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
   if(req.user.organization != req.params.id){
     return next(
@@ -233,12 +283,4 @@ exports.sendInvitationEmail = catchAsync(async(req, res,next) => {
       message: "Email sent"
     },
   });
-});
-
-exports.updateMemberRole = catchAsync(async(req, res,next) => {
-  if(req.user.organization != req.params.id){
-    return next(
-      new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
-  }
-    
 });
