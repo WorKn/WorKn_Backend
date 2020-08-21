@@ -226,7 +226,7 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
     return next(
       new AppError("Usted no pertenece a esta organización, no puede agregar miembros.",401));
   }
-  const member = await User.findById(req.body.member.id);
+  const member = await User.findById(req.body.id);
   const originOrg = await Organization.findById(req.params.id).select("+members");
   if(!originOrg.members.includes(member.id)){
     return next(
