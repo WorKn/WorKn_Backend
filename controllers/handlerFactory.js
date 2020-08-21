@@ -7,7 +7,7 @@ exports.deleteOne = (Model) =>
     const doc = await Model.findByIdAndRemove(req.params.id);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID.', 404));
+      return next(new AppError('Elemento no encontrado.', 404));
     }
 
     res.status(204).json({
@@ -24,7 +24,7 @@ exports.updateOne = (Model) =>
     });
 
     if (!doc) {
-      return next(new AppError('No document found with that ID.', 404));
+      return next(new AppError('Elemento no encontrado.', 404));
     }
 
     res.status(200).json({
@@ -54,11 +54,12 @@ exports.getOne = (Model, popOptions) =>
     //If there is a popOption, we want to populate
     if (popOptions) query = query.populate(popOptions);
 
+    query = fieldsHandler(Model, query, req);
     query = query.select('-__v');
     const doc = await query;
 
     if (!doc) {
-      return next(new AppError('No document found with that ID.', 404));
+      return next(new AppError('Elemento no encontrado.', 404));
     }
 
     res.status(200).json({
@@ -88,3 +89,24 @@ exports.getAll = (Model) =>
       },
     });
   });
+
+const fieldsHandler = (Model, query, req) => {
+  let fieldsToShow = '';
+  switch (Model.modelName) {
+    case 'User':
+      if (req.user && req.params.id === req.user.id) {
+        fieldsToShow = '+location +phone +identificationNumber';
+      }
+      break;
+    case 'Organization':
+      if (req.user && req.params.id === req.user.organization) {
+        fieldsToShow = '+members';
+        query.populate({ path: 'members' });
+      }
+      break;
+
+    default:
+      break;
+  }
+  return query.select(fieldsToShow);
+};

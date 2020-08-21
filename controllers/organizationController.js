@@ -127,6 +127,11 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMyOrganization = catchAsync(async (req, res, next) => {
+  req.params.id = req.user.organization;
+  next();
+});
+
 exports.getOrganization = factory.getOne(Organization);
 
 exports.getAllOrganizations = factory.getAll(Organization);

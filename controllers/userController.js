@@ -11,6 +11,11 @@ exports.getAllUsers = factory.getAll(User);
 
 exports.getUser = factory.getOne(User);
 
+exports.getMe = catchAsync(async (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+});
+
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
   let allowedFields = ['name', 'lastname', 'bio', 'identificationNumber', 'phone', 'location'];
   const tagsRef = req.body.tags;
@@ -23,7 +28,9 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     allowedFields.push('category', 'tags');
 
     //Update tag's ref with their values
-    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
+    if (req.body.tags) {
+      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
+    }
   }
 
   //Filter out unwanted fields names that are not allowed to be updated
@@ -43,7 +50,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   updatedUser.save({ validateBeforeSave: false });
 
   //Create the new TagUser records asynchronously
-  if (req.user.userType === 'applicant') updateTagUser(req.user.id, tagsRef);
+  if (req.user.userType === 'applicant' && req.user.tags) updateTagUser(req.user.id, tagsRef);
 
   res.status(200).json({
     status: 'success',
