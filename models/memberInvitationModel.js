@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -29,7 +28,7 @@ const memberInvitationSchema = new mongoose.Schema({
 
 memberInvitationSchema.pre('save', function (next) {
     this.token = crypto.createHash('sha256').update(this.token).digest('hex'); // saved the encripted token  
-    //Converting to miliseconds. token will expire in 5h
+    //Converting to miliseconds. token will expire in 48h
     this.expirationDate = Date.now() + 48 * 60 * 60 * 1000;
     next();
   });
@@ -39,8 +38,13 @@ memberInvitationSchema.pre('save', async function (next) {
     next();
   });
 
-memberInvitationSchema.methods.encrypt = function (property) {
-    return crypto.createHash('sha256').update(property).digest('hex')
+memberInvitationSchema.methods.validateToken = async function (candidateToken) {
+    encryptedIncomming = crypto.createHash('sha256').update(candidateToken).digest('hex');
+    result = false;
+    if(encryptedIncomming == this.token){
+        result = true;
+    }
+    return result;
 };
 const MemberInvitation = mongoose.model('MemberInvitation', memberInvitationSchema);
 
