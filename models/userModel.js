@@ -161,7 +161,7 @@ const userSchema = new mongoose.Schema({
     validate: [
       {
         validator: function (el) {
-          return el.length < 5;
+          return el.length < 11;
         },
         message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
       },
