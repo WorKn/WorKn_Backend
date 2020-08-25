@@ -29,7 +29,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
 
     //Update tag's ref with their values
     if (req.body.tags) {
-      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
+      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
     }
   }
 
@@ -50,7 +50,8 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   updatedUser.save({ validateBeforeSave: false });
 
   //Create the new TagUser records asynchronously
-  if (req.user.userType === 'applicant' && req.user.tags) updateTagUser(req.user.id, tagsRef);
+  // if (req.user.userType === 'applicant' && req.user.tags) updateTagUser(req.user.id, tagsRef);
+  if (req.user.userType === 'applicant' && tagsRef) updateTags(req.user, tagsRef);
 
   res.status(200).json({
     status: 'success',
@@ -59,6 +60,49 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     },
   });
 });
+//TODO: Export this functions to a separate module and use it in Offers controller
+const updateTags = async (user, tags) => {
+  let userTags = [];
+  if (user.tags) {
+    user.tags.forEach((tag) => userTags.push(tag.id));
+  }
+
+  const currentTags = new Set(userTags);
+  const newTags = new Set(tags);
+
+  const tagsToBeAdded = difference(newTags, currentTags);
+  const tagsToBeDeleted = difference(currentTags, newTags);
+
+  addTagUser(user.id, tagsToBeAdded);
+  deleteTagUser(user.id, tagsToBeDeleted);
+};
+
+const difference = (a, b) => {
+  return new Set([...a].filter((x) => !b.has(x)));
+};
+
+const addTagUser = async (user, tags) => {
+  tags.forEach((tag) => {
+    TagUser.create({ tag, user }).catch((err) => {
+      //Error code 11000 = Duplicate key
+      if (err.code != 11000) console.log(err);
+      // else if (!err) console.log('SUCCESS: tag(', tag, ') created');
+    });
+  });
+};
+
+const deleteTagUser = async (user, tags) => {
+  tags.forEach((tag) => {
+    TagUser.deleteOne({ tag, user }).catch((err) => {
+      if (err) {
+        console.log('ERROR:\n', err);
+      }
+      // else {
+      //   console.log('SUCCESS: tag(', tag, ') deleted');
+      // }
+    });
+  });
+};
 
 const updateTagUser = async (user, tags) => {
   tags.forEach((tag) => {
