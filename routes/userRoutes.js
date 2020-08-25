@@ -15,6 +15,7 @@ const {
   updateMyProfile,
   getMe,
 } = require('./../controllers/userController');
+const skipRoute = require('./../utils/skipRoute');
 const router = express.Router();
 
 //Routes
@@ -28,12 +29,12 @@ router.patch('/resetPassword/:token', resetPassword);
 router.patch('/validateEmail/:token', validateEmail);
 
 router.get('/', getAllUsers);
-router.get('/me', protect, getMe, getUser);
-router.get('/:id', getUser);
+router.get('/:id', skipRoute('me'), getUser);
 
 //Protected routes
 router.use(protect);
 
+router.get('/me', getMe, getUser);
 router.patch('/updateMyPassword', updateMyPassword);
 router.patch('/updateMyProfile', updateMyProfile);
 
