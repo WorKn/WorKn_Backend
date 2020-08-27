@@ -2,6 +2,7 @@ const factory = require('./handlerFactory');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const filterObj = require('./../utils/filterObj');
+const updateTags = require('./../utils/updateTags');
 
 const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
@@ -29,7 +30,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
 
     //Update tag's ref with their values
     if (req.body.tags) {
-      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
+      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
     }
   }
 
@@ -49,8 +50,8 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
 
   updatedUser.save({ validateBeforeSave: false });
 
-  //Create the new TagUser records asynchronously
-  if (req.user.userType === 'applicant' && req.user.tags) updateTagUser(req.user.id, tagsRef);
+  //Update TagUser records asynchronously
+  if (req.user.userType === 'applicant' && tagsRef) updateTags(req.user, tagsRef, TagUser);
 
   res.status(200).json({
     status: 'success',
@@ -59,12 +60,3 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-const updateTagUser = async (user, tags) => {
-  tags.forEach((tag) => {
-    TagUser.create({ tag, user }).catch((err) => {
-      //Error code 11000 = Duplicate key
-      if (err.code != 11000) console.log(err);
-    });
-  });
-};
