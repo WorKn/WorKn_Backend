@@ -68,7 +68,9 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Por favor, provea el email y contraseña', 400));
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select(
+    '+password +location +phone +identificationNumber'
+  );
 
   if (!user || !(await user.verifyPassword(password, user.password))) {
     return next(new AppError('Email o contraseña incorrecta', 401));
@@ -244,7 +246,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!currentUser) {
     return next(new AppError('El usuario ya no existe.', 401));
   }
-  
+
   //Check if user changed password after token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
@@ -260,12 +262,11 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.restricTo = (...admittedRoles) => {
- 
   return (req, res, next) => {
-    if ( 
-      !admittedRoles.includes(req.user.userType) && 
-      !admittedRoles.includes(req.user.organizationRole)) 
-      {
+    if (
+      !admittedRoles.includes(req.user.userType) &&
+      !admittedRoles.includes(req.user.organizationRole)
+    ) {
       return next(
         new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
       );
