@@ -23,8 +23,6 @@ router.use(protect, restricTo('offerer'), verifyEmailValidation);
 
 router.post('/', createOffer);
 
-router.use(protectOffer);
-
-router.route('/:id').patch(editOffer).delete(deleteOffer);
+router.route('/:id').patch(protectOffer, editOffer).delete(protectOffer, deleteOffer);
 
 module.exports = router;

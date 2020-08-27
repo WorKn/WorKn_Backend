@@ -68,7 +68,9 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Por favor, provea el email y contraseña', 400));
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select(
+    '+password +location +phone +identificationNumber'
+  );
 
   if (!user || !(await user.verifyPassword(password, user.password))) {
     return next(new AppError('Email o contraseña incorrecta', 401));

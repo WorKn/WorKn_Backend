@@ -2,29 +2,11 @@ const catchAsync = require('../utils/catchAsync');
 const filterObj = require('./../utils/filterObj');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
+const updateTags = require('./../utils/updateTags');
 
 const Offer = require('../models/offerModel');
 const TagOffer = require('./../models/tagOfferModel');
 const Tag = require('./../models/tagModel');
-
-const updateTagOffer = async (offer, tags) => {
-  tags.forEach((tag) => {
-    TagOffer.create({ tag, offer }).catch((err) => {
-      //Error code 11000 = Duplicate key
-      if (err.code != 11000) console.log(err);
-    });
-  });
-};
-
-const deleteTagOffer = async (offer) => {
-  TagOffer.deleteMany({ offer }, (err, result) => {
-    if (err) {
-      console.log('ERROR:\n', err);
-    } else {
-      console.log('SUCCESS: ', result.deletedCount, ' documents deleted');
-    }
-  });
-};
 
 exports.protectOffer = catchAsync(async (req, res, next) => {
   offer = await Offer.findById(req.params.id);
@@ -47,6 +29,8 @@ exports.protectOffer = catchAsync(async (req, res, next) => {
     }
   }
 
+  req.offer = offer;
+
   next();
 });
 
@@ -54,7 +38,7 @@ exports.createOffer = catchAsync(async (req, res, next) => {
   const tagsRef = req.body.tags;
 
   //Update tag's ref with their values
-  req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-_id -__v');
+  req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
 
   const offer = await Offer.create({
     title: req.body.title,
@@ -69,7 +53,11 @@ exports.createOffer = catchAsync(async (req, res, next) => {
     salaryRange: req.body.salaryRange,
   });
 
-  updateTagOffer(offer.id, tagsRef);
+  //This is necessary due to the current way that updateTags works
+  const offerWithoutTags = new Offer(offer);
+  offerWithoutTags.tags = [];
+
+  updateTags(offerWithoutTags, tagsRef, TagOffer);
 
   res.status(201).json({
     status: 'success',
@@ -80,7 +68,9 @@ exports.createOffer = catchAsync(async (req, res, next) => {
 });
 
 exports.editOffer = catchAsync(async (req, res, next) => {
-  allowedFields = [
+  const tagsRef = req.body.tags;
+
+  const allowedFields = [
     'title',
     'description',
     'offerType',
@@ -88,16 +78,27 @@ exports.editOffer = catchAsync(async (req, res, next) => {
     'category',
     'closingDate',
     'salaryRange',
+    'tags',
   ];
 
-  filteredBody = filterObj(req.body, allowedFields);
+  //Update tag's ref with their values
+  if (req.body.tags) {
+    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
+  }
 
+  //Filter out unwanted fields names that are not allowed to be updated
+  const filteredBody = filterObj(req.body, allowedFields);
+
+  // Update offer document
   const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,
     runValidators: true,
   });
 
   updatedOffer.save();
+
+  //Update TagOffer records asynchronously
+  if (tagsRef) updateTags(req.offer, tagsRef, TagOffer);
 
   res.status(200).json({
     status: 'success',
@@ -122,7 +123,7 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
 
   deletedOffer.save();
 
-  deleteTagOffer(deletedOffer.id);
+  updateTags(req.offer, [], TagOffer);
 
   res.status(204).json({
     status: 'success',
