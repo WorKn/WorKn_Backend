@@ -14,6 +14,8 @@ const {
   getUser,
   updateMyProfile,
   getMe,
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary,
 } = require('./../controllers/userController');
 const router = express.Router();
 
@@ -35,6 +37,11 @@ router.get('/:id', getUser);
 router.use(protect);
 
 router.patch('/updateMyPassword', updateMyPassword);
-router.patch('/updateMyProfile', updateMyProfile);
+router.patch(
+  '/updateMyProfile',
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary,
+  updateMyProfile
+);
 
 module.exports = router;
