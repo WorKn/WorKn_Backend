@@ -40,10 +40,12 @@ cloudinary.config({
 exports.uploadPhotoToServer = upload.single('profilePicture');
 
 exports.uploadPhotoToCloudinary = catchAsync(async (req, res, next) => {
-  const result = await streamUpload(req);
+  if (req.file) {
+    const result = await streamUpload(req);
 
-  if (result.secure_url) {
-    req.user.profilePicture = result.secure_url;
+    if (result.secure_url) {
+      req.body.profilePicture = result.secure_url;
+    }
   }
 
   next();
@@ -58,9 +60,10 @@ let streamUpload = (req) => {
 
     let stream = cloudinary.uploader.upload_stream(config, (error, result) => {
       if (result) {
+        console.log('SUCCESS: Image uploaded successfully.');
         resolve(result);
       } else {
-        console.log(error);
+        console.log('ERROR:', 'On image upload.\n', error);
         reject(error);
       }
     });
