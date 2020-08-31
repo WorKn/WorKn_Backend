@@ -70,6 +70,10 @@ const organizationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  bio:{
+    type: String,
+    maxlength: 3000
+  },
 });
 
 organizationSchema.pre('save', function (next) {
