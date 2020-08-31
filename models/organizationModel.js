@@ -70,7 +70,7 @@ const organizationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  description:{
+  bio:{
     type: String,
     maxlength: 3000
   },
