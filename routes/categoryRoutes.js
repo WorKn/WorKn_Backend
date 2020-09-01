@@ -1,11 +1,11 @@
 const express = require('express');
 const {
     getAllCategories,
-    getTagOnCategory
+    getCategoriesTag
 } = require('./../controllers/categoryController');
 const router = express.Router();
 
 router.get('/',getAllCategories);
-router.get('/:categoryName/tags',getTagOnCategory);
+router.get('/:categoryName/tags',getCategoriesTag);
 
 module.exports = router;
