@@ -7,19 +7,20 @@ const AppError = require('./../utils/appError');
 
 exports.getAllCategories = factory.getAll(Category);
 
-exports.getCategoriesTag = catchAsync(async(req,res,next)=>{
-    var targetCategory = (await Category.findOne({name: req.params.categoryName}))
-    if(!targetCategory){
-        return next(
-            new AppError('Lo sentimos, la categoría solicitada no existe por el momento.', 400)
-        );
-    }
-    
-    var tags = await Tag.find( {category: targetCategory} );
-    res.status(200).json({
-        status: 'success',
-        data: {
-            tags: tags,
-        },  
-    });
+exports.getCategoriesTag = catchAsync(async (req, res, next) => {
+  var targetCategory = await Category.findOne({ name: req.params.categoryName });
+  if (!targetCategory) {
+    return next(
+      new AppError('Lo sentimos, la categoría solicitada no existe por el momento.', 400)
+    );
+  }
+
+  var tags = await Tag.find({ category: targetCategory });
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tags: tags,
+    },
+  });
 });
+
