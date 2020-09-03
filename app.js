@@ -7,6 +7,7 @@ const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const offerRouter = require('./routes/offerRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
+const interactionRouter = require('./routes/interactionRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -31,6 +32,7 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/offers', offerRouter);
 app.use('/api/v1/categories', categoryRouter);
+app.use('/api/v1/interaction', interactionRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {
