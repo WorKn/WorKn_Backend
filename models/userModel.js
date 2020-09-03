@@ -3,6 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const sendEmail = require('./../utils/email');
+const getClientHost = require('../utils/getClientHost');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -153,7 +154,11 @@ const userSchema = new mongoose.Schema({
     default: true,
     select: false,
   },
-  profilePicture: String,
+  profilePicture: {
+    type: String,
+    default:
+      'https://res.cloudinary.com/workn/image/upload/v1599076826/resources/blank-profile-picture_lvbhnr.png',
+  },
   tags: {
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
@@ -211,11 +216,13 @@ userSchema.methods.generateToken = function (tokenType) {
   newToken.tokenType = tokenType;
 
   //Clean unwanted data in tokens.array
-  this.tokens = this.tokens.filter((el, index, arr) => {
-    return el.tokenType != tokenType;
-  });
+  if (this.tokens) {
+    this.tokens = this.tokens.filter((el, index, arr) => {
+      return el.tokenType != tokenType;
+    });
 
-  this.tokens.push(newToken);
+    this.tokens.push(newToken);
+  } else this.tokens = [newToken];
 
   //Send unencrypted token
   return token;
@@ -232,11 +239,11 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-userSchema.methods.sendValidationEmail = async function () {
+userSchema.methods.sendValidationEmail = async function (req) {
   validationToken = this.generateToken('email');
-  const resetURL = `/api/v1/users/validateEmail/${validationToken}`;
+  const validationURL = `${getClientHost(req)}/emailvalidation/${validationToken}`;
 
-  const message = `Para validar su email, por favor, envíe un GET request al suguiente url: ${resetURL}.\n
+  const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
   Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
 
   try {
@@ -255,11 +262,13 @@ userSchema.methods.sendValidationEmail = async function () {
 };
 
 userSchema.methods.cleanTokensArray = async function (tokenType) {
-  this.tokens = this.tokens.filter((el, index, arr) => {
-    return el.tokenType != tokenType;
-  });
+  if (this.tokens) {
+    this.tokens = this.tokens.filter((el, index, arr) => {
+      return el.tokenType != tokenType;
+    });
 
-  if (this.tokens.length == 0) this.tokens = undefined;
+    if (this.tokens.length == 0) this.tokens = undefined;
+  }
 };
 
 userSchema.pre('save', function (next) {

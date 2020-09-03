@@ -25,7 +25,7 @@ router.route('/:id/:token').get(protect, validateMemberInvitation, getOrganizati
 router.use(protect, restricTo('owner'));
 
 router.post('/', createOrganization);
-router.post('/:id', editOrganization);
+router.patch('/:id', editOrganization);
 router
   .route('/:id/members/invite')
   .post(restricTo('owner', 'supervisor'), sendInvitationEmail);
