@@ -1,13 +1,15 @@
+const crypto = require('crypto');
+const factory = require('./handlerFactory');
+
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
-const AppError = require('./../utils/appError');
 const MemberInvitation = require('../models/memberInvitationModel');
+
+const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
-const crypto = require('crypto');
-const factory = require('./handlerFactory');
-const { isUndefined } = require('util');
+const getClientHost = require('./../utils/getClientHost');
 
 sendInviteEmail = async (organization, members, req, next) => {
   const orgUserEmail = [];
@@ -34,9 +36,7 @@ sendInviteEmail = async (organization, members, req, next) => {
         invitedRole: 'member',
       });
 
-      const invitationLink = `${req.protocol}://${req.get('host')}/api/v1/users/signup/${
-        organization.id
-      }/${invitationToken}`; // this will change
+      const invitationLink = `${getClientHost(req)}/${organization.id}/${invitationToken}`; // this will change
 
       let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
       try {
@@ -284,7 +284,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     return next(
       new AppError('Usted no pertenece a esta organización, no puede agregar miembros.', 401)
     );
-  }
+
   if(!req.body.members.forEach){
     return next(
       new AppError(

@@ -1,9 +1,13 @@
-const User = require('./../models/userModel');
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+
+const User = require('./../models/userModel');
+
+const catchAsync = require('./../utils/catchAsync');
+const AppError = require('./../utils/appError');
 const sendEmail = require('./../utils/email');
+const getClientHost = require('./../utils/getClientHost');
+
 const { promisify } = require('util');
 
 const signToken = (id) => {
@@ -55,7 +59,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     organization: req.body.organization,
   });
 
-  newUser.sendValidationEmail();
+  newUser.sendValidationEmail(req);
   await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
@@ -90,7 +94,7 @@ exports.logout = (req, res) => {
 };
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({ email: req.body.email }).select('+tokens');
 
   if (!user) {
     return next(
@@ -106,11 +110,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   //Send email to user
-  const resetURL = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/resetPassword/${resetToken}`;
+  const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
 
-  const message = `Ha solicitado restaurar su contraseña? Envíe un PATCH request al suguiente url: ${resetURL}.\n
+  const message = `Para restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${resetURL}\n
   Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
 
   try {
@@ -150,7 +152,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
         expireDate: { $gt: Date.now() },
       },
     },
-  });
+  }).select('+tokens');
 
   if (!user) {
     return next(new AppError('Token inválido o expirado', 400));
@@ -175,7 +177,7 @@ exports.validateEmail = catchAsync(async (req, res, next) => {
     tokens: {
       $elemMatch: { token: hashedToken, tokenType: 'email' },
     },
-  });
+  }).select('+tokens');
 
   if (!user) {
     return next(new AppError('Token inválido.', 400));
