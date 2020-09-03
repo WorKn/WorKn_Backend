@@ -112,7 +112,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   //Send email to user
   const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
 
-  const message = `Para validar restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${resetURL}\n
+  const message = `Para restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${resetURL}\n
   Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
 
   try {
