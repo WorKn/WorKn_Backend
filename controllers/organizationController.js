@@ -36,7 +36,7 @@ sendInviteEmail = async (organization, members, req, next) => {
         invitedRole: 'member',
       });
 
-      const invitationLink = `${getClientHost(req)}/${organization.id}/${invitationToken}`; // this will change
+      const invitationLink = `${getClientHost(req)}/addMember/${organization.id}/${invitationToken}`; // this will change
 
       let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
       try {
