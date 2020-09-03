@@ -70,6 +70,15 @@ const organizationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  bio: {
+    type: String,
+    maxlength: 3000,
+  },
+  profilePicture: {
+    type: String,
+    default:
+      'https://res.cloudinary.com/workn/image/upload/v1599076826/resources/blank-profile-picture_lvbhnr.png',
+  },
 });
 
 organizationSchema.pre('save', function (next) {

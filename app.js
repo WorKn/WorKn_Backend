@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const offerRouter = require('./routes/offerRoutes');
+const categoryRouter = require('./routes/categoryRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -29,6 +30,7 @@ app.use(cookieParser());
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/offers', offerRouter);
+app.use('/api/v1/categories', categoryRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {
