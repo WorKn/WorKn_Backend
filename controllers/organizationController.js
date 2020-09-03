@@ -18,7 +18,7 @@ sendInviteEmail = async (organization, members, req, next) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
   } catch {}
-
+  
   members.forEach(async (invitedEmail) => {
     if (!orgUserEmail.includes(invitedEmail)) {
       let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex');
@@ -283,6 +283,14 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
   if (req.user.organization != req.params.id) {
     return next(
       new AppError('Usted no pertenece a esta organización, no puede agregar miembros.', 401)
+    );
+
+  if(!req.body.members.forEach){
+    return next(
+      new AppError(
+        'No se ha detectado ningún miembro para invitar, por favor, revise su solicitud.',
+        400
+      )
     );
   }
   const org = await Organization.findById(req.user.organization);
