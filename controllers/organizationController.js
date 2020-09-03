@@ -18,7 +18,7 @@ sendInviteEmail = async (organization, members, req, next) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
   } catch {}
-  
+
   members.forEach(async (invitedEmail) => {
     if (!orgUserEmail.includes(invitedEmail)) {
       let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex');
@@ -36,7 +36,9 @@ sendInviteEmail = async (organization, members, req, next) => {
         invitedRole: 'member',
       });
 
-      const invitationLink = `${getClientHost(req)}/addMember/${organization.id}/${invitationToken}`; // this will change
+      const invitationLink = `${getClientHost(req)}/addMember/${
+        organization.id
+      }/${invitationToken}`; // this will change
 
       let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
       try {
@@ -284,8 +286,9 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     return next(
       new AppError('Usted no pertenece a esta organización, no puede agregar miembros.', 401)
     );
+  }
 
-  if(!req.body.members.forEach){
+  if (!req.body.members.forEach) {
     return next(
       new AppError(
         'No se ha detectado ningún miembro para invitar, por favor, revise su solicitud.',
