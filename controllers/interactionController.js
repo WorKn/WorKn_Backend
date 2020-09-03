@@ -10,9 +10,9 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   userType = user.userType;
   const interactionOffer = req.body.offer;
   let interactionState, interactionOfferer, interactionApplicant;
-  const target = await User.findById(req.body.targetUser);
-  
-  if (user.id == req.body.targetUser) {
+  const target = await User.findById(req.body.applicant);
+
+  if (user.id == req.body.applicant) {
     return next(new AppError('Usted no puede mostrar interes en si mismo.', 400));
   }
   if (userType == target.userType) {
@@ -30,7 +30,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   } else if (userType == 'offerer') {
     interactionState = 'interesed';
     interactionOfferer = user.id;
-    interactionApplicant = req.body.targetUser;
+    interactionApplicant = req.body.applicant;
   }
   let interaction = await Interaction.findOne({
     offer: interactionOffer,
