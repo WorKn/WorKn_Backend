@@ -153,7 +153,11 @@ const userSchema = new mongoose.Schema({
     default: true,
     select: false,
   },
-  profilePicture: String,
+  profilePicture: {
+    type: String,
+    default:
+      'https://res.cloudinary.com/workn/image/upload/v1599076826/resources/blank-profile-picture_lvbhnr.png',
+  },
   tags: {
     type: [tagSchema],
     //This is for preventing mongoose to create an empty array by default.
