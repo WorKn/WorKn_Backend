@@ -12,7 +12,7 @@ const {
   protect,
   verifyEmailValidation,
 } = require('./../controllers/authController');
-const { createInteraction } = require('./../controllers/interactionController');
+const { createInteraction, acceptInteraction } = require('./../controllers/interactionController');
 const router = express.Router();
 
 router.get('/', getAllOffers);
@@ -23,7 +23,7 @@ router.get('/:id', getOffer);
 router.use(protect, verifyEmailValidation);
 
 router.route('/interaction').post(createInteraction);
-
+router.patch('/interaction/accept',acceptInteraction)
 router.use(restricTo('offerer'));
 
 router.post('/', createOffer);

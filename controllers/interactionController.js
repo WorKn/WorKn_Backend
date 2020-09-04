@@ -57,3 +57,33 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
+
+  let interaction = await Interaction.findById(req.body.offerID);
+  if(!interaction || interaction.state=="deleted"){
+    return next(
+      new AppError("Esta interacción no está disponible o no existe, lo sentimos.",400)
+    )
+  }
+  const user = req.user;
+  if(interaction.applicant && interaction.applicant==user.id){
+    return next(
+      new AppError("Usted no puede aceptar esta interacción, debe esperar que el ofertante acepte, lo sentimos.")
+    )
+  }
+  else if (interaction.offerer && interaction.offerer==user.id){
+    return next(
+      new AppError("Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.")
+    )
+  }
+  interaction.state="match";
+  interaction.save();
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'Match stablished',
+      interaction,
+    },
+  });
+});
