@@ -133,3 +133,22 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
 
 exports.getAllOffers = factory.getAll(Offer);
 exports.getOffer = factory.getOne(Offer);
+
+exports.getMyOffers  = catchAsync(async (req, res, next) => {
+  let offers = []
+  if(req.user.organization){
+    offers = await Offer.find({ organization: {$in: req.user.organization}});
+  }else{
+    offers = await Offer.find({ createdBy: { $in: req.user.id} });
+  }
+  if(offers.length==0){
+    return next(new AppError('Usted no posee ninguna oferta asociada, le invitamos a crear una.', 400));
+  }
+  res.status(201).json({
+    status: 'success',
+    data: {
+      offers,
+    },
+  });
+
+});

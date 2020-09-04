@@ -6,6 +6,7 @@ const {
   editOffer,
   protectOffer,
   deleteOffer,
+  getMyOffers,
 } = require('../controllers/offerController');
 const {
   restricTo,
@@ -16,7 +17,7 @@ const { createInteraction } = require('./../controllers/interactionController');
 const router = express.Router();
 
 router.get('/', getAllOffers);
-
+router.get('/me',protect,verifyEmailValidation,restricTo('offerer'), getMyOffers);
 router.get('/:id', getOffer);
 
 //Protected routes
