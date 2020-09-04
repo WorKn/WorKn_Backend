@@ -64,10 +64,17 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
 
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
+
   if (req.user.userType == 'applicant') {
     interactions = await Interaction.find({ applicant: req.user.id });
   } else if (req.user.userType == 'offerer' && req.user.organization) {
+    const organizationOffers = await Offer.find({
+      organization: req.user.organization,
+    }).select('_id');
+    interactions = await Interaction.find({ offer: { $in: organizationOffers } });
   } else if (req.user.userType == 'offerer') {
+    const userOffers = await Offer.find({ createdBy: req.user.id }).select('_id');
+    interactions = await Interaction.find({ offer: { $in: userOffers } });
   }
 
   res.status(200).json({
@@ -92,12 +99,18 @@ exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
     if (req.user.organization) {
       if (req.user.organization != offer.organization) {
         return next(
-          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+          new AppError(
+            'Usted no tiene autorización de interactuar con la oferta especificada.',
+            401
+          )
         );
       }
     } else {
       return next(
-        new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+        new AppError(
+          'Usted no tiene autorización de interactuar con la oferta especificada.',
+          401
+        )
       );
     }
   }
