@@ -80,21 +80,27 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
   if (interaction.offerer){
     if(interaction.offerer==user.id){
       return next(
-        new AppError("Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.")
-      )
+        new AppError(
+          'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.',
+          400
+        )
+      );
     };
     if (req.user.organization) {
-      offerer = await User.findById(interaction.offerer);
-      if(req.user.organization==offerer.organization){
-        return next(
-          new AppError("Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.")
+      return next(
+        new AppError(
+          'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.',
+          400
         )
-      }
+      );
     } 
   } else if(interaction.applicant && interaction.applicant==user.id){
     return next(
-      new AppError("Usted no puede aceptar esta interacción, debe esperar que el ofertante acepte, lo sentimos.")
-    )
+      new AppError(
+        'Usted no puede aceptar esta interacción, debe esperar que el ofertante acepte, lo sentimos.',
+        400
+      )
+    );
   }  
 
   if(interaction.offerer){
@@ -102,9 +108,7 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
       interaction.state="match";
       console.log("matched in applicant");
     }else{
-      return next(
-        new AppError("Esta oferta no está dirigida hacia usted, lo sentimos.")
-      )
+      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
   }else{
     offerer = await User.findOne({organization: req.offer.organization});
@@ -153,7 +157,7 @@ exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
     if (req.user.organization) {
       if (req.user.organization != offer.organization) {
         return next(
-          new AppError('Usted no tiene autorización para tomar acción en esta oferta', 401)
+          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
         );
       }
     } else {
