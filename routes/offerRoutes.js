@@ -13,19 +13,18 @@ const {
   protect,
   verifyEmailValidation,
 } = require('./../controllers/authController');
-const { createInteraction } = require('./../controllers/interactionController');
+
+const interactionRouter = require('./../routes/interactionRoutes');
 const router = express.Router();
 
 router.get('/', getAllOffers);
 router.get('/me',protect,verifyEmailValidation,restricTo('offerer'), getMyOffers);
+router.use('/interactions', interactionRouter);
+
 router.get('/:id', getOffer);
 
 //Protected routes
-router.use(protect, verifyEmailValidation);
-
-router.route('/interaction').post(createInteraction);
-
-router.use(restricTo('offerer'));
+router.use(protect, restricTo('offerer'), verifyEmailValidation);
 
 router.post('/', createOffer);
 

@@ -15,8 +15,8 @@ const interactionSchema = new mongoose.Schema({
   },
   updatedAt: {
     type: Date,
-    required: [true, 'Una interación debe de contener la fecha en que se modificó.'],
     default: Date.now(),
+    select: false,
   },
   offerer: {
     type: mongoose.Schema.ObjectId,
