@@ -1,10 +1,8 @@
 const crypto = require('crypto');
 const factory = require('./handlerFactory');
-
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
 const MemberInvitation = require('../models/memberInvitationModel');
-
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const sendEmail = require('./../utils/email');
@@ -28,7 +26,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   const owner = await User.findById(req.user.id);
   owner.organization = organization._id;
   await owner.save({ validateBeforeSave: false });
-  
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -205,43 +203,43 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       )
     );
   }
-  if(req.body.invitation.organizationRole=="owner"){
+  if (req.body.invitation.organizationRole == 'owner') {
     return next(
       new AppError(
-        'Se ha detectado el rol owner en la invitation, el proceso será interrumpido.'+
-        'por favor, asigne un rol distinto',
+        'Se ha detectado el rol owner en la invitation, el proceso será interrumpido.' +
+          'por favor, asigne un rol distinto',
         400
       )
     );
   }
   const orgUserEmail = [];
-  if(req.organization.members){
+  if (req.organization.members) {
     req.organization.members.forEach(async (memb) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
   }
-  console.log(req.body.invitation.email)
+  console.log(req.body.invitation.email);
   if (!orgUserEmail.includes(req.body.invitation.email)) {
     let encryptedEmail = crypto
       .createHash('sha256')
       .update(req.body.invitation.email)
       .digest('hex');
-  
+
     await MemberInvitation.deleteOne({
       organization: req.organization.id,
       email: encryptedEmail,
     });
     const invitationToken = crypto.randomBytes(32).toString('hex'); // create
-  
+
     await MemberInvitation.create({
       organization: req.organization.id,
       email: req.body.invitation.email, // this can fail, mongoose error
       token: invitationToken,
       invitedRole: req.body.invitation.role, //This can fail, mongoose error
     });
-  
+
     const invitationLink = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
-    
+
     let message = `Has sido invitado a ${req.organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
     try {
       await sendEmail({
@@ -267,16 +265,19 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.protectOrganization = catchAsync(async (req, res, next) => { 
-  const org = await Organization.findById(req.params.id);
-  if(!org){
-    return next( new AppError("No se ha podido encontrar la organización especificada",404))
+exports.protectOrganization = catchAsync(async (req, res, next) => {
+  const org = await Organization.findById(req.user.organization);
+  if (!org) {
+    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
   }
-  if(req.user.organization!=org.id){
+  if (org.id!= req.params.id) {
     return next(
-      new AppError('Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.', 401)
+      new AppError(
+        'Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.',
+        401
+      )
     );
   }
-  req.organization = org; 
+  req.organization = org;
   next();
 });
