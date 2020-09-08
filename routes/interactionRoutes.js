@@ -9,10 +9,10 @@ const {
 const router = express.Router();
 
 //Protected routes
-router.use(protect, verifyEmailValidation);
+router.use(protect, verifyEmailValidation, protectOfferInteraction);
 
-router.route('/').post(protectOfferInteraction, createInteraction);
-router.patch('/accept', protectOfferInteraction, acceptInteraction)
-router.route('/me').get(getMyInteractions);
+router.post('/', createInteraction);
+router.patch('/accept', acceptInteraction);
+router.get('/me', getMyInteractions);
 
 module.exports = router;

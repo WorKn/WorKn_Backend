@@ -130,17 +130,33 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
 });
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
+  let parsedInteractions = {};
+
   if (req.user.userType == 'applicant') {
-    interactions = await Interaction.find({ applicant: req.user.id });
-  } else if (req.user.userType == 'offerer' && req.user.organization) {
+    interactions = await Interaction.find({ applicant: req.user.id }).populate({
+      path: 'offer',
+    });
   } else if (req.user.userType == 'offerer') {
+    interactions = await Interaction.find({ offer: req.body.offer }).populate({
+      path: 'applicant',
+    });
   }
+
+  parsedInteractions.applied = interactions.filter(
+    (interaction) => interaction.state === 'applied'
+  );
+  parsedInteractions.interesed = interactions.filter(
+    (interaction) => interaction.state === 'interesed'
+  );
+  parsedInteractions.match = interactions.filter(
+    (interaction) => interaction.state === 'match'
+  );
 
   res.status(200).json({
     status: 'success',
     results: interactions.length,
     data: {
-      interactions,
+      interactions: parsedInteractions,
     },
   });
 });
@@ -157,12 +173,18 @@ exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
     if (req.user.organization) {
       if (req.user.organization != offer.organization) {
         return next(
-          new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+          new AppError(
+            'Usted no tiene autorización de interactuar con la oferta especificada.',
+            401
+          )
         );
       }
     } else {
       return next(
-        new AppError('Usted no tiene autorización de modificar la oferta especificada.', 401)
+        new AppError(
+          'Usted no tiene autorización de interactuar con la oferta especificada.',
+          401
+        )
       );
     }
   }
