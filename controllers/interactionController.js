@@ -64,24 +64,33 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
 
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
+  let parsedInteractions = {};
 
   if (req.user.userType == 'applicant') {
-    interactions = await Interaction.find({ applicant: req.user.id });
-  } else if (req.user.userType == 'offerer' && req.user.organization) {
-    const organizationOffers = await Offer.find({
-      organization: req.user.organization,
-    }).select('_id');
-    interactions = await Interaction.find({ offer: { $in: organizationOffers } });
+    interactions = await Interaction.find({ applicant: req.user.id }).populate({
+      path: 'offer',
+    });
   } else if (req.user.userType == 'offerer') {
-    const userOffers = await Offer.find({ createdBy: req.user.id }).select('_id');
-    interactions = await Interaction.find({ offer: { $in: userOffers } });
+    interactions = await Interaction.find({ offer: req.body.offer }).populate({
+      path: 'applicant',
+    });
   }
+
+  parsedInteractions.applied = interactions.filter(
+    (interaction) => interaction.state === 'applied'
+  );
+  parsedInteractions.interesed = interactions.filter(
+    (interaction) => interaction.state === 'interesed'
+  );
+  parsedInteractions.match = interactions.filter(
+    (interaction) => interaction.state === 'match'
+  );
 
   res.status(200).json({
     status: 'success',
     results: interactions.length,
     data: {
-      interactions,
+      interactions: parsedInteractions,
     },
   });
 });

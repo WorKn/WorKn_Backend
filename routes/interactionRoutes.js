@@ -12,6 +12,6 @@ router.use(protect, verifyEmailValidation);
 
 router.route('/').post(protectOfferInteraction, createInteraction);
 
-router.route('/me').get(getMyInteractions);
+router.route('/me').get(protectOfferInteraction, getMyInteractions);
 
 module.exports = router;
