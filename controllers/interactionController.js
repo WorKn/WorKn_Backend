@@ -62,6 +62,72 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
+
+  let interaction = await Interaction.findOne({offer: req.body.offer});
+  if(!interaction || interaction.state=="deleted"){
+    return next(
+      new AppError("Esta interacción no está disponible o no existe, lo sentimos.",400)
+    )
+  }
+  if(interaction.state=="match"){
+    return next(
+      new AppError("Usted ya está en contacto, felicidades!!",400)
+    )
+  }
+  const user = req.user;
+  
+  if (interaction.offerer){
+    if(interaction.offerer==user.id){
+      return next(
+        new AppError(
+          'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.',
+          400
+        )
+      );
+    };
+    if (req.user.organization) {
+      return next(
+        new AppError(
+          'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.',
+          400
+        )
+      );
+    } 
+  } else if(interaction.applicant && interaction.applicant==user.id){
+    return next(
+      new AppError(
+        'Usted no puede aceptar esta interacción, debe esperar que el ofertante acepte, lo sentimos.',
+        400
+      )
+    );
+  }  
+
+  if(interaction.offerer){
+    if(interaction.applicant==user.id){
+      interaction.state="match";
+      console.log("matched in applicant");
+    }else{
+      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
+    }
+  }else{
+    offerer = await User.findOne({organization: req.offer.organization});
+    if(req.user.organization==offerer.organization){
+      interaction.state="match";
+      console.log("matched in organization");
+    }
+  }
+  
+  interaction.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'Match stablished',
+      interaction,
+    },
+  });
+});
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};
@@ -97,7 +163,6 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
 
 exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
   if (req.user.userType != 'offerer') return next();
-
   offer = await Offer.findById(req.body.offer);
 
   if (!offer) {

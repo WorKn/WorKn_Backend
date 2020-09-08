@@ -4,14 +4,15 @@ const {
   createInteraction,
   getMyInteractions,
   protectOfferInteraction,
+  acceptInteraction,
 } = require('../controllers/interactionController');
 const router = express.Router();
 
 //Protected routes
-router.use(protect, verifyEmailValidation);
+router.use(protect, verifyEmailValidation, protectOfferInteraction);
 
-router.route('/').post(protectOfferInteraction, createInteraction);
-
-router.route('/me').get(protectOfferInteraction, getMyInteractions);
+router.post('/', createInteraction);
+router.patch('/accept', acceptInteraction);
+router.get('/me', getMyInteractions);
 
 module.exports = router;
