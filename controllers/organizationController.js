@@ -13,15 +13,22 @@ const getClientHost = require('./../utils/getClientHost');
 
 sendInviteEmail = async (organization, members, req, next) => {
   const orgUserEmail = [];
-  try {
+  if(organization.members){
     organization.members.forEach(async (memb) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
-  } catch {}
-
-  members.forEach(async (invitedEmail) => {
-    if (!orgUserEmail.includes(invitedEmail)) {
-      let encryptedEmail = crypto.createHash('sha256').update(invitedEmail).digest('hex');
+  }
+  let ownerInvitation = members.find(o => o.role === 'owner');
+  if(ownerInvitation){
+    return 1
+  }
+  members.forEach(async (invitedMember) => {
+    
+    if (!orgUserEmail.includes(invitedMember.email)) {
+      let encryptedEmail = crypto
+        .createHash('sha256')
+        .update(invitedMember.email)
+        .digest('hex');
 
       var invitation = await MemberInvitation.deleteOne({
         organization: organization.id,
@@ -31,32 +38,26 @@ sendInviteEmail = async (organization, members, req, next) => {
 
       var invitation = await MemberInvitation.create({
         organization: organization.id,
-        email: invitedEmail,
+        email: invitedMember.email, // this can fail, mongoose error
         token: invitationToken,
-        invitedRole: 'member',
+        invitedRole: invitedMember.role, //This can fail, mongoose error
       });
 
-      const invitationLink = `${getClientHost(req)}/addMember/${
-        organization.id
-      }/${invitationToken}`; // this will change
+      const invitationLink = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
 
       let message = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
       try {
         await sendEmail({
-          email: invitedEmail,
+          email: invitedMember.email,
           subject: `Fuiste invitado a ${organization.name} en WorKn`,
           message,
         });
       } catch (error) {
-        return next(
-          new AppError(
-            'Se ha producido un error tratando de enviar el email de invitación. Por favor, inténtelo de nuevo más tarde.',
-            500
-          )
-        );
+        return 2;
       }
     }
   });
+  return 0;
 };
 exports.createOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization) {
@@ -213,7 +214,7 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         'Esta no es la vía para cambiar el dueño de la organización, ' +
-          'no es posible convertir un miembro de la organización en dueño desde aquí.',
+          'si desea relevar su posición, por favor, diríjase a la nombreDelPageAquí.',
         401
       )
     );
@@ -297,12 +298,30 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     );
   }
   const org = await Organization.findById(req.user.organization);
-  sendInviteEmail(org, req.body.members, req, next);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      message: 'Email sent',
-    },
-  });
+  msgCode = await sendInviteEmail(org, req.body.members, req, next);
+  switch (msgCode) {
+    case 1:
+      return next(
+        new AppError(
+          'Se ha detectado una invitación con el rol owner asignado, el proceso será interrumpido.',
+          400
+        )
+      );
+      break;
+    case 2:
+      return next(
+        new AppError(
+          'Se ha producido un error tratando de enviar el email de invitación. Por favor, inténtelo de nuevo más tarde.',
+          500
+        )
+      );
+    default:
+      res.status(200).json({
+        status: 'success',
+        data: {
+          message: 'Invitation sent',
+        },
+      });
+  }
+  
 });

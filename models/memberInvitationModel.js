@@ -20,7 +20,7 @@ const memberInvitationSchema = new mongoose.Schema({
     },
     invitedRole: {
         type: String,
-        enum: ['owner', 'admin', 'member'],
+        enum: ['owner', 'supervisor', 'member'],
         required: [true, 'No puedes invitar a una persona sin un rol.'],
     },
     expirationDate: Date
