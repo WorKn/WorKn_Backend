@@ -112,7 +112,7 @@ exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
   });
   if (invitation && invitation.expirationDate > Date.now()) {
     req.organization = invitation.organization;
-    req.role = invitation.invitedRole;
+    req.invitedRole = invitation.invitedRole;
     return next();
   }
   return next(new AppError('Token inválido, acceso denegado.', 403));
