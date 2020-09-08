@@ -38,6 +38,6 @@ router
 
 router.route('/:id/members/add').post(restricTo('supervisor', 'owner'),protectOrganization, addOrganizationMember);
 
-router.route('/invitation/:token').get(protectOrganization, validateMemberInvitation, getInvitationInfo);
+router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
 
 module.exports = router;
