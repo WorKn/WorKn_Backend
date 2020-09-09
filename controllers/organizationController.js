@@ -111,10 +111,23 @@ exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
     token: encryptedToken,
   });
   if (invitation && invitation.expirationDate > Date.now()) {
+    req.invitedRole = invitation.invitedRole;
+    req.organization = await Organization.findById(invitation.organization);
     return next();
   }
   return next(new AppError('Token inválido, acceso denegado.', 403));
 });
+
+exports.getInvitationInfo = catchAsync(async(req,res,next)=>{
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: "access authorized",
+      organization: req.organization,
+      invitedRole: req.invitedRole
+    },
+  });
+})
 
 exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member = await User.findById(req.body.member.id);
@@ -265,8 +278,16 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.protectOrganization = catchAsync(async (req, res, next) => {
+  if(req.user.userType =="applicant"){
+    return next(
+      new AppError(
+        'Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.',
+        401
+      )
+    );
+  }
   const org = await Organization.findById(req.user.organization);
-  if (!req.params.id) {
+  if(!org || !req.params.id){
     return next(new AppError('No se ha podido encontrar la organización especificada', 404));
   }
   if (org.id!= req.params.id) {
