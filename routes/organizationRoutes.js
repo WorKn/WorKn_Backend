@@ -41,9 +41,6 @@ router
   .route('/members/invite')
   .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
 
-
-router.route('/members/add').post(restricTo('supervisor', 'owner'),protectOrganization, addOrganizationMember);
-
 router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
 
 module.exports = router;
