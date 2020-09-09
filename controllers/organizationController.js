@@ -288,6 +288,9 @@ exports.protectOrganization = catchAsync(async (req, res, next) => {
     );
   }
   const org = await Organization.findById(req.user.organization);
+  if(!org){
+    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
+  }
   if (!req.params.id) {
     return next(new AppError('No se ha podido encontrar la organización especificada', 404));
   }
