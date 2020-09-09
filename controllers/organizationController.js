@@ -231,7 +231,6 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
   }
-  console.log(req.body.invitation.email);
   if (!orgUserEmail.includes(req.body.invitation.email)) {
     let encryptedEmail = crypto
       .createHash('sha256')
@@ -288,10 +287,7 @@ exports.protectOrganization = catchAsync(async (req, res, next) => {
     );
   }
   const org = await Organization.findById(req.user.organization);
-  if(!org){
-    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
-  }
-  if (!req.params.id) {
+  if(!org || !req.params.id){
     return next(new AppError('No se ha podido encontrar la organización especificada', 404));
   }
   if (org.id!= req.params.id) {
