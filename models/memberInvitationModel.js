@@ -33,11 +33,6 @@ memberInvitationSchema.pre('save', function (next) {
     next();
   });
 
-memberInvitationSchema.pre('save', async function (next) { 
-    this.email = crypto.createHash('sha256').update(this.email).digest('hex') // encrypt user/target email for privacy
-    next();
-  });
-
 const MemberInvitation = mongoose.model('MemberInvitation', memberInvitationSchema);
 
 module.exports = MemberInvitation;

@@ -9,8 +9,31 @@ const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
 const jwt = require('jsonwebtoken');
-const { verifyEmailValidation } = require('./authController');
 
+exports.protectOrganization = catchAsync(async (req, res, next) => {
+  if(req.user.userType =="applicant"){
+    return next(
+      new AppError(
+        'Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.',
+        401
+      )
+    );
+  }
+  const org = await Organization.findById(req.user.organization).select('+members');
+  if(!org){
+    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
+  }
+  if (!org.members.includes(req.user.id)) {
+    return next(
+      new AppError(
+        'Usted no pertenece a está incluido dentro de la organización, por favor, contacte con un supervisor o con el dueño de la organización.',
+        401
+      )
+    );
+  }
+  req.organization = org;
+  next();
+});
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization) {
@@ -74,23 +97,31 @@ exports.getMyOrganization = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.getOrganization = factory.getOne(Organization);
+
+exports.getAllOrganizations = factory.getAll(Organization);
+
+// Members-----------------
+
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
-  const originOrg = await Organization.findById(req.user.organization).select('+members');
-  if(req.body.user){
-    potentialMember = req.body.user
-  }else{
-    potentialMember = req.user
-  }
-  if (!originOrg.members.includes(potentialMember.id)) {
-    if (potentialMember.organization != req.organization.id) {
+  const originOrg = await Organization.findById(req.organization.id).select('+members');
+  if (!originOrg.members.includes(req.user.id)) {
+    if (req.user.organization != req.organization.id) {
       return next(
         new AppError(
-          'El usuario no están registrados con la organización, no se pueden agregar a la misma.',
+          'El usuario no está registrado con la organización, no se pueden agregar a la misma.',
           403
         )
       );
     }
-    await originOrg.members.push(potentialMember);
+    await originOrg.members.push(req.user);
+  }else{
+    return next(
+      new AppError(
+        'Usted ya es un miembro de la aplicación, no se puede volver a agregar.',
+        403
+      )
+    );
   }
 
   const organization = await Organization.findByIdAndUpdate(req.organization.id, originOrg, {
@@ -99,42 +130,12 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   }).select('+members');
 
   res.status(201).json({
-    status: 'members added',
+    status: 'member added',
     data: {
       organization,
     },
   });
 });
-
-exports.getOrganization = factory.getOne(Organization);
-
-exports.getAllOrganizations = factory.getAll(Organization);
-
-exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
-  encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  var invitation = await MemberInvitation.findOne({
-    token: encryptedToken,
-  });
-  if (invitation && invitation.expirationDate > Date.now()) {
-    req.invitedRole = invitation.invitedRole;
-    req.invitedEmail = invitation.email;
-    req.organization = await Organization.findById(invitation.organization);
-    return next();
-  }
-  return next(new AppError('Token inválido, acceso denegado.', 403));
-});
-
-exports.getInvitationInfo = catchAsync(async(req,res,next)=>{
-  res.status(200).json({
-    status: 'success',
-    data: {
-      message: "access authorized",
-      organization: req.organization,
-      invitedRole: req.invitedRole
-    },
-  });
-})
-
 exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member = await User.findById(req.body.member.id);
   if (member.organizationRole == 'owner') {
@@ -166,7 +167,6 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
     },
   });
 });
-
 exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
   const member = await User.findById(req.body.id);
   const originOrg = await Organization.findById(req.params.id).select('+members');
@@ -212,6 +212,9 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+
+//Invitations--------------------
 
 exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
   if (!req.body.invitation) {
@@ -284,41 +287,49 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.protectOrganization = catchAsync(async (req, res, next) => {
-  if(req.user.userType =="applicant"){
-    return next(
-      new AppError(
-        'Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.',
-        401
-      )
-    );
+exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
+  encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  var invitation = await MemberInvitation.findOne({
+    token: encryptedToken,
+  });
+  if (invitation && invitation.expirationDate > Date.now()) {
+    req.invitedRole = invitation.invitedRole;
+    req.invitedEmail = invitation.email;
+    req.organization = await Organization.findById(invitation.organization);
+    return next();
   }
-  const org = await Organization.findById(req.user.organization);
-  if(!org || !req.params.id){
-    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
-  }
-  if (org.id!= req.params.id) {
-    return next(
-      new AppError(
-        'Usted no pertenece a esta organización, por favor, contacte con un supervisor o con el dueño de la organización.',
-        401
-      )
-    );
-  }
-  req.organization = org;
-  next();
+  return next(new AppError('Token inválido, acceso denegado.', 403));
 });
 
-exports.signupOrganization = catchAsync(async (req, res, next) => {
+exports.getInvitationInfo = catchAsync(async(req,res,next)=>{
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: "access authorized",
+      organization: req.organization,
+      email: req.invitedEmail,
+      invitedRole: req.invitedRole
+    },
+  });
+})
 
-  email = crypto.createHash('sha256').update(req.body.email).digest('hex')
-  if(email!=req.invitedEmail){
-    return next(new AppError('Usted no puede registrarse con un correo distinto al que lo invitaron.',403))
-  }
+exports.deleteInvitation=catchAsync(async(req,res,next)=>{
+  let encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  await MemberInvitation.deleteOne({
+    token: encryptedToken,
+  });
+  console.log(`The invitation to ${req.user.email} was deleted`);
+  next();
+})
+
+// Register------------------
+
+exports.signupOrganizationMember = catchAsync(async (req, res, next) => {
+
   const newUser = await User.create({
     name: req.body.name,
     lastname: req.body.lastname,
-    email: req.body.email,
+    email: req.invitedEmail,
     birthday: req.body.birthday,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
@@ -359,12 +370,3 @@ const createSendToken = (user, res) => {
   user.password = undefined;
 };
 
-
-exports.deleteInvitation=catchAsync(async(req,res,next)=>{
-  let encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  await MemberInvitation.deleteOne({
-    token: encryptedToken,
-  });
-  console.log(`The invitation to ${req.user.email} was deleted`);
-  next();
-})

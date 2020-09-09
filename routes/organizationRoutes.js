@@ -12,7 +12,7 @@ const {
   removeOrganizationMember,
   protectOrganization,
   getInvitationInfo,
-  signupOrganization,
+  signupOrganizationMember,
   deleteInvitation
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
@@ -21,8 +21,7 @@ const router = express.Router();
 
 router.get('/', getAllOrganizations);
 router.get('/myOrganization', protect, getMyOrganization, getOrganization);
-
-router.post('/signupOrganization/:token', validateMemberInvitation,signupOrganization,deleteInvitation, addOrganizationMember);
+router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
 
 router.get('/:id', getOrganization);
 
@@ -30,19 +29,21 @@ router.get('/:id', getOrganization);
 router.use(protect);
 
 router.post('/',restricTo('owner'), protectOrganization, createOrganization);
-router.patch('/:id',restricTo('owner'), protectOrganization, editOrganization);
-router
-  .route('/:id/members/invite')
-  .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
+router.patch('/',restricTo('owner'), protectOrganization, editOrganization);
 
 router
-  .route('/:id/members')
+  .route('/members')
   .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
   .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
   .delete(restricTo('supervisor', 'owner'), protectOrganization, removeOrganizationMember);
 
-router.route('/:id/members/add').post(restricTo('supervisor', 'owner'),protectOrganization, addOrganizationMember);
+router
+  .route('/members/invite')
+  .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
 
-router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
+
+router.route('/members/add').post(restricTo('supervisor', 'owner'),protectOrganization, addOrganizationMember);
+
+router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
 
 module.exports = router;
