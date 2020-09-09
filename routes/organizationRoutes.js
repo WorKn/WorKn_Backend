@@ -12,6 +12,8 @@ const {
   removeOrganizationMember,
   protectOrganization,
   getInvitationInfo,
+  signupOrganization,
+  deleteInvitation
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
 
@@ -19,6 +21,9 @@ const router = express.Router();
 
 router.get('/', getAllOrganizations);
 router.get('/myOrganization', protect, getMyOrganization, getOrganization);
+
+router.post('/signupOrganization/:token', validateMemberInvitation,signupOrganization,deleteInvitation, addOrganizationMember);
+
 router.get('/:id', getOrganization);
 
 //Protected routes

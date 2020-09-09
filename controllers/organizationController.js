@@ -8,6 +8,9 @@ const catchAsync = require('./../utils/catchAsync');
 const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
+const jwt = require('jsonwebtoken');
+const { verifyEmailValidation } = require('./authController');
+
 
 exports.createOrganization = catchAsync(async (req, res, next) => {
   if (req.user.organization) {
@@ -72,23 +75,25 @@ exports.getMyOrganization = catchAsync(async (req, res, next) => {
 });
 
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
-  const originOrg = await Organization.findById(req.params.id).select('+members');
-  for (member of req.body.members) {
-    if (!originOrg.members.includes(member)) {
-      potentialMember = await User.findById(member);
-      if (potentialMember.organization != req.params.id) {
-        return next(
-          new AppError(
-            'Uno o más usuarios no están registrados con la organización, no se pueden agregar a la misma',
-            401
-          )
-        );
-      }
-      await originOrg.members.push(member);
+  const originOrg = await Organization.findById(req.user.organization).select('+members');
+  if(req.body.user){
+    potentialMember = req.body.user
+  }else{
+    potentialMember = req.user
+  }
+  if (!originOrg.members.includes(potentialMember.id)) {
+    if (potentialMember.organization != req.organization.id) {
+      return next(
+        new AppError(
+          'El usuario no están registrados con la organización, no se pueden agregar a la misma.',
+          403
+        )
+      );
     }
+    await originOrg.members.push(potentialMember);
   }
 
-  const organization = await Organization.findByIdAndUpdate(req.params.id, originOrg, {
+  const organization = await Organization.findByIdAndUpdate(req.organization.id, originOrg, {
     new: true,
     runValidators: true,
   }).select('+members');
@@ -112,6 +117,7 @@ exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
   });
   if (invitation && invitation.expirationDate > Date.now()) {
     req.invitedRole = invitation.invitedRole;
+    req.invitedEmail = invitation.email;
     req.organization = await Organization.findById(invitation.organization);
     return next();
   }
@@ -288,10 +294,7 @@ exports.protectOrganization = catchAsync(async (req, res, next) => {
     );
   }
   const org = await Organization.findById(req.user.organization);
-  if(!org){
-    return next(new AppError('No se ha podido encontrar la organización especificada', 404));
-  }
-  if (!req.params.id) {
+  if(!org || !req.params.id){
     return next(new AppError('No se ha podido encontrar la organización especificada', 404));
   }
   if (org.id!= req.params.id) {
@@ -305,3 +308,63 @@ exports.protectOrganization = catchAsync(async (req, res, next) => {
   req.organization = org;
   next();
 });
+
+exports.signupOrganization = catchAsync(async (req, res, next) => {
+
+  email = crypto.createHash('sha256').update(req.body.email).digest('hex')
+  if(email!=req.invitedEmail){
+    return next(new AppError('Usted no puede registrarse con un correo distinto al que lo invitaron.',403))
+  }
+  const newUser = await User.create({
+    name: req.body.name,
+    lastname: req.body.lastname,
+    email: req.body.email,
+    birthday: req.body.birthday,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
+    userType: 'offerer',
+    organizationRole: req.invitedRole,
+    organization: req.organization.id,
+  });
+
+  newUser.sendValidationEmail(req);
+  await newUser.save({ validateBeforeSave: false });
+
+  createSendToken(newUser, res);
+  req.user = newUser;
+  next();
+});
+
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+const createSendToken = (user, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 // Converting from days to miliseconds)
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+    cookieOptions.secure = false; //Remember change this to true when Https be available
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+  user.password = undefined;
+};
+
+
+exports.deleteInvitation=catchAsync(async(req,res,next)=>{
+  let encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  await MemberInvitation.deleteOne({
+    token: encryptedToken,
+  });
+  console.log(`The invitation to ${req.user.email} was deleted`);
+  next();
+})
