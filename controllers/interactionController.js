@@ -151,7 +151,6 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   parsedInteractions.match = interactions.filter(
     (interaction) => interaction.state === 'match'
   );
-
   res.status(200).json({
     status: 'success',
     results: interactions.length,
