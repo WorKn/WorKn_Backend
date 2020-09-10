@@ -240,7 +240,6 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       orgUserEmail.push(await User.findById(memb).email);
     });
   }
-  console.log(req.body.invitation.email);
   if (!orgUserEmail.includes(req.body.invitation.email)) {
     let encryptedEmail = crypto
       .createHash('sha256')
@@ -286,6 +285,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     },
   });
 });
+
 
 exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
   encryptedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
