@@ -22,6 +22,7 @@ const router = express.Router();
 router.get('/', getAllOrganizations);
 router.get('/myOrganization', protect, getMyOrganization, getOrganization);
 router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
+router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
 
 router.get('/:id', getOrganization);
 
@@ -40,7 +41,5 @@ router
 router
   .route('/members/invite')
   .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
-
-router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
 
 module.exports = router;

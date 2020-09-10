@@ -132,7 +132,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'member added',
     data: {
-      organization,
+      user: req.user
     },
   });
 });
@@ -326,24 +326,32 @@ exports.deleteInvitation=catchAsync(async(req,res,next)=>{
 
 exports.signupOrganizationMember = catchAsync(async (req, res, next) => {
 
-  const newUser = await User.create({
-    name: req.body.name,
-    lastname: req.body.lastname,
-    email: req.invitedEmail,
-    birthday: req.body.birthday,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
-    userType: 'offerer',
-    organizationRole: req.invitedRole,
-    organization: req.organization.id,
-  });
+  try{
+    const newUser = await User.create({
+      name: req.body.name,
+      lastname: req.body.lastname,
+      email: req.invitedEmail,
+      birthday: req.body.birthday,
+      password: req.body.password,
+      passwordConfirm: req.body.passwordConfirm,
+      userType: 'offerer',
+      organizationRole: req.invitedRole,
+      organization: req.organization.id,
+    });
+    
+    await newUser.save({ validateBeforeSave: false });
+    createSendToken(newUser, res);
 
-  newUser.sendValidationEmail(req);
-  await newUser.save({ validateBeforeSave: false });
+    newUser.sendValidationEmail(req);
 
-  createSendToken(newUser, res);
-  req.user = newUser;
-  next();
+    req.user = newUser;
+    next();
+  }catch(err){
+    await User.deleteOne({email: req.invitedEmail});
+    console.log(err.message)
+    return next(new AppError('Algo salió mal al crear su cuenta, por favor, intente de nuevo',500))
+  }
+  
 });
 
 const signToken = (id) => {
