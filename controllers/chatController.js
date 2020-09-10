@@ -17,9 +17,19 @@ io.sockets.on('connection', function (socket) {
   //   io.emit('is_online', '🔴 <i>' + socket.username + ' left the chat..</i>');
   // });
 
+  socket.on('username', function (username) {
+    console.log('Username event...');
+    socket.username = username;
+    io.emit('is_online', socket.username + ' joined the chat...');
+  });
+
   socket.on('chat_message', function (message) {
     //   io.emit('chat_message', '<strong>' + socket.username + '</strong>: ' + message);
-    io.emit('chat_message', 'User: ' + message);
+    io.emit('chat_message', socket.username + ': ' + message);
+  });
+
+  socket.on('disconnect', function (username) {
+    io.emit('is_online', socket.username + ' left the chat...');
   });
 
   socket.on('testEvent', (data) => {
@@ -28,5 +38,5 @@ io.sockets.on('connection', function (socket) {
 });
 
 const server = http.listen(8080, function () {
-  console.log('listening on *:8080');
+  console.log('listening on 8080...');
 });
