@@ -348,7 +348,6 @@ exports.signupOrganizationMember = catchAsync(async (req, res, next) => {
     next();
   }catch(err){
     await User.deleteOne({email: req.invitedEmail});
-    console.log(err.message)
     return next(new AppError('Algo salió mal al crear su cuenta, por favor, intente de nuevo',500))
   }
   
