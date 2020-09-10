@@ -20,7 +20,7 @@ const memberInvitationSchema = new mongoose.Schema({
     },
     invitedRole: {
         type: String,
-        enum: ['owner', 'admin', 'member'],
+        enum: ['owner', 'supervisor', 'member'],
         required: [true, 'No puedes invitar a una persona sin un rol.'],
     },
     expirationDate: Date
@@ -30,11 +30,6 @@ memberInvitationSchema.pre('save', function (next) {
     this.token = crypto.createHash('sha256').update(this.token).digest('hex'); // saved the encripted token  
     //Converting to miliseconds. token will expire in 48h
     this.expirationDate = Date.now() + 48 * 60 * 60 * 1000;
-    next();
-  });
-
-memberInvitationSchema.pre('save', async function (next) { 
-    this.email = crypto.createHash('sha256').update(this.email).digest('hex') // encrypt user/target email for privacy
     next();
   });
 

@@ -10,6 +10,10 @@ const {
   validateMemberInvitation,
   updateMemberRole,
   removeOrganizationMember,
+  protectOrganization,
+  getInvitationInfo,
+  signupOrganizationMember,
+  deleteInvitation
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
 
@@ -17,24 +21,25 @@ const router = express.Router();
 
 router.get('/', getAllOrganizations);
 router.get('/myOrganization', protect, getMyOrganization, getOrganization);
+router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
+router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
+
 router.get('/:id', getOrganization);
 
-router.route('/:id/:token').get(protect, validateMemberInvitation, getOrganization);
-
 //Protected routes
-router.use(protect, restricTo('owner'));
+router.use(protect);
 
-router.post('/', createOrganization);
-router.patch('/:id', editOrganization);
-router
-  .route('/:id/members/invite')
-  .post(restricTo('owner', 'supervisor'), sendInvitationEmail);
-router
-  .route('/:id/members')
-  .get(restricTo('owner', 'supervisor', 'member'), getOrganization)
-  .post(restricTo('supervisor', 'owner'), updateMemberRole)
-  .delete(restricTo('supervisor', 'owner'), removeOrganizationMember);
+router.post('/',restricTo('owner'), protectOrganization, createOrganization);
+router.patch('/',restricTo('owner'), protectOrganization, editOrganization);
 
-router.route('/:id/members/add').post(restricTo('supervisor', 'owner'), addOrganizationMember);
+router
+  .route('/members')
+  .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
+  .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
+  .delete(restricTo('supervisor', 'owner'), protectOrganization, removeOrganizationMember);
+
+router
+  .route('/members/invite')
+  .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
 
 module.exports = router;
