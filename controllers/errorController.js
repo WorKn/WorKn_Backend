@@ -5,7 +5,7 @@ const handleJWTError = () => new AppError('Por favor, inicie sesión nuevamente.
 const handleModelValidationError = (err) => {
   const errors = Object.values(err.errors).map((el) => el.message);
 
-  const message = `Error de validación. ${errors.join('. ')}`;
+  const message = `Error de validación. ${errors.join(' ')}`;
   return new AppError(message, 400);
 };
 
