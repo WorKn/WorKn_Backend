@@ -1,42 +1,48 @@
-const express = require('express');
-const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+// const express = require('express');
+// const app = express();
 
-app.get('/', function (req, res) {
-  res.send('hello world');
-});
+// const http = require('http').Server(app);
 
-io.sockets.on('connection', function (socket) {
-  //   socket.on('username', function (username) {
-  //     socket.username = username;
-  //     io.emit('is_online', '🔵 <i>' + socket.username + ' join the chat..</i>');
-  //   });
+// const server = require('./../server');
 
-  // socket.on('disconnect', function (username) {
-  //   io.emit('is_online', '🔴 <i>' + socket.username + ' left the chat..</i>');
-  // });
+const ioConnect = (server) => {
+  const io = require('socket.io')(server);
 
-  socket.on('username', function (username) {
-    console.log('Username event...');
-    socket.username = username;
-    io.emit('is_online', socket.username + ' joined the chat...');
+  io.sockets.on('connection', function (socket) {
+    //   socket.on('username', function (username) {
+    //     socket.username = username;
+    //     io.emit('is_online', '🔵 <i>' + socket.username + ' join the chat..</i>');
+    //   });
+
+    // socket.on('disconnect', function (username) {
+    //   io.emit('is_online', '🔴 <i>' + socket.username + ' left the chat..</i>');
+    // });
+
+    socket.on('username', function (username) {
+      console.log('Username event...');
+      socket.username = username;
+      io.emit('is_online', socket.username + ' joined the chat...');
+    });
+
+    socket.on('chat_message', function (message) {
+      io.emit('chat_message', socket.username + ': ' + message);
+    });
+
+    socket.on('disconnect', function (username) {
+      io.emit('is_online', socket.username + ' left the chat...');
+    });
+
+    socket.on('testEvent', (data) => {
+      console.log('Client emited a test event. Data = ', data);
+    });
   });
+};
 
-  socket.on('chat_message', function (message) {
-    //   io.emit('chat_message', '<strong>' + socket.username + '</strong>: ' + message);
-    io.emit('chat_message', socket.username + ': ' + message);
-  });
+module.exports = ioConnect;
+// app.get('/', function (req, res) {
+//   res.send('hello world');
+// });
 
-  socket.on('disconnect', function (username) {
-    io.emit('is_online', socket.username + ' left the chat...');
-  });
-
-  socket.on('testEvent', (data) => {
-    console.log('Client emited a test event. Data = ', data);
-  });
-});
-
-const server = http.listen(8080, function () {
-  console.log('listening on 8080...');
-});
+// const server = http.listen(8080, function () {
+//   console.log('listening on 8080...');
+// });

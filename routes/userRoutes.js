@@ -17,9 +17,13 @@ const {
   uploadPhotoToServer,
   uploadPhotoToCloudinary,
 } = require('./../controllers/userController');
+const chatRouter = require('./chatRoutes');
 const router = express.Router();
 
 //Routes
+
+router.use('/chats', chatRouter);
+
 router.post('/signup', signup);
 router.post('/login', login);
 router.get('/logout', logout);
