@@ -2,6 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
 const Chat = require('../models/chatModel');
+const User = require('../models/userModel');
 const Message = require('../models/messageModel');
 const Interaction = require('../models/InteractionModel');
 
@@ -37,13 +38,11 @@ exports.protectChat = catchAsync(async (req, res, next) => {
       );
     }
 
-    req.user2.id = interaction.offerer;
-  }
-
-  if (req.user.userType === 'offerer') {
+    req.user2.id = interaction.offerer.id;
+  } else if (req.user.userType === 'offerer') {
     if (req.user.organization) {
       if (
-        req.user.id != interaction.offerer.id ||
+        req.user.id != interaction.offerer.id &&
         req.user.organization != interaction.offerer.organization
       ) {
         return next(
@@ -65,23 +64,39 @@ exports.protectChat = catchAsync(async (req, res, next) => {
     req.user2.id = interaction.applicant;
   }
 
-  req.interaction = interaction;
-
   next();
 });
 
 exports.createChat = catchAsync(async (req, res, next) => {
+  let chat;
+
   const message = await Message.create({
     message: req.body.message,
     sender: req.user.id,
   });
 
-  const chat = await Chat.create({
-    messages: [message],
-    user1: req.user.id,
-    user2: req.user2.id,
-    isLive: true,
-  });
+  const query = { $in: [req.user.id, req.user2.id] };
+  chat = await Chat.find({ user1: query, user2: query });
+
+  if (chat) {
+    chat.messages.push(message.id);
+    chat = await chat.save();
+  } else {
+    chat = await Chat.create({
+      messages: [message.id],
+      user1: req.user.id,
+      user2: req.user2.id,
+      isLive: true,
+    });
+  }
+
+  let user2 = await User.findById(req.user2.id).select('+chats');
+
+  req.user.chats.push(chat.id);
+  user2.chats.push(chat.id);
+
+  await req.user.save({ validateBeforeSave: false });
+  await user2.save({ validateBeforeSave: false });
 
   res.status(201).json({
     status: 'success',
