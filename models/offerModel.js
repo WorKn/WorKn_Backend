@@ -15,7 +15,7 @@ const offerSchema = mongoose.Schema({
   },
   offerType: {
     type: String,
-    enum: ['temporal', 'undefined', 'contract', 'free'],
+    enum: ['fixed', 'free'],
     required: [true, 'Una oferta debe ser de un tipo.'],
   },
   state: {

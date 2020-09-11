@@ -1,5 +1,5 @@
 const express = require('express');
-const { 
+const {
   createOrganization,
   getAllOrganizations,
   getOrganization,
@@ -9,36 +9,37 @@ const {
   addOrganizationMember,
   validateMemberInvitation,
   updateMemberRole,
-  removeOrganizationMember
+  removeOrganizationMember,
+  protectOrganization,
+  getInvitationInfo,
+  signupOrganizationMember,
+  deleteInvitation
 } = require('./../controllers/organizationController');
-const { restricTo , protect} = require('./../controllers/authController');
+const { restricTo, protect } = require('./../controllers/authController');
 
 const router = express.Router();
 
 router.get('/', getAllOrganizations);
 router.get('/myOrganization', protect, getMyOrganization, getOrganization);
+router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
+router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
+
 router.get('/:id', getOrganization);
 
-router
-  .route('/:id/:token')
-  .get(protect,validateMemberInvitation,getOrganization); 
-
 //Protected routes
-router.use(protect, restricTo('owner'));
+router.use(protect);
 
-router.post('/', createOrganization);
-router.post('/:id', editOrganization);
+router.post('/',restricTo('owner'), protectOrganization, createOrganization);
+router.patch('/',restricTo('owner'), protectOrganization, editOrganization);
+
 router
-  .route('/:id/members/invite')
-  .post(restricTo("owner", "supervisor"),sendInvitationEmail);
+  .route('/members')
+  .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
+  .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
+  .delete(restricTo('supervisor', 'owner'), protectOrganization, removeOrganizationMember);
+
 router
-  .route('/:id/members')
-  .get(restricTo("owner","supervisor","member"),getOrganization)
-  .post(restricTo("supervisor","owner"),updateMemberRole)
-  .delete(restricTo("supervisor","owner"),removeOrganizationMember);
-  
-router
-  .route('/:id/members/add')
-  .post(restricTo("supervisor","owner"),addOrganizationMember);
+  .route('/members/invite')
+  .post(restricTo('owner', 'supervisor'), protectOrganization, sendInvitationEmail);
 
 module.exports = router;
