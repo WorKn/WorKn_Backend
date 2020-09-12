@@ -35,77 +35,89 @@ exports.protectOffer = catchAsync(async (req, res, next) => {
 });
 
 exports.createOffer = catchAsync(async (req, res, next) => {
-  const tagsRef = req.body.tags;
+  try {
+    const tagsRef = req.body.tags;
 
-  //Update tag's ref with their values
-  req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
+    //Update tag's ref with their values
+    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
 
-  const offer = await Offer.create({
-    title: req.body.title,
-    description: req.body.description,
-    offerType: req.body.offerType,
-    location: req.body.location,
-    createdBy: req.user.id,
-    organization: req.user.organization,
-    tags: req.body.tags,
-    category: req.body.category,
-    closingDate: req.body.closingDate,
-    salaryRange: req.body.salaryRange,
-  });
+    const offer = await Offer.create({
+      title: req.body.title,
+      description: req.body.description,
+      offerType: req.body.offerType,
+      location: req.body.location,
+      createdBy: req.user.id,
+      organization: req.user.organization,
+      tags: req.body.tags,
+      category: req.body.category,
+      closingDate: req.body.closingDate,
+      salaryRange: req.body.salaryRange,
+    });
 
-  //This is necessary due to the current way that updateTags works
-  const offerWithoutTags = new Offer(offer);
-  offerWithoutTags.tags = [];
+    //This is necessary due to the current way that updateTags works
+    const offerWithoutTags = new Offer(offer);
+    offerWithoutTags.tags = [];
 
-  updateTags(offerWithoutTags, tagsRef, TagOffer);
+    updateTags(offerWithoutTags, tagsRef, TagOffer);
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      offer,
-    },
-  });
+    res.status(201).json({
+      status: 'success',
+      data: {
+        offer,
+      },
+    });
+  } catch (error) {
+    return next(
+      new AppError('Lo sentimos, algo salió mal al crear su oferta, intente nuevamente', 500)
+    );
+  }
 });
 
 exports.editOffer = catchAsync(async (req, res, next) => {
-  const tagsRef = req.body.tags;
+  try {
+    const tagsRef = req.body.tags;
 
-  const allowedFields = [
-    'title',
-    'description',
-    'offerType',
-    'location',
-    'category',
-    'closingDate',
-    'salaryRange',
-    'tags',
-  ];
+    const allowedFields = [
+      'title',
+      'description',
+      'offerType',
+      'location',
+      'category',
+      'closingDate',
+      'salaryRange',
+      'tags',
+    ];
 
-  //Update tag's ref with their values
-  if (req.body.tags) {
-    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
+    //Update tag's ref with their values
+    if (req.body.tags) {
+      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
+    }
+
+    //Filter out unwanted fields names that are not allowed to be updated
+    const filteredBody = filterObj(req.body, allowedFields);
+
+    // Update offer document
+    const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
+      new: true,
+      runValidators: true,
+    });
+
+    updatedOffer.save();
+
+    //Update TagOffer records asynchronously
+    if (tagsRef) updateTags(req.offer, tagsRef, TagOffer);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        offer: updatedOffer,
+      },
+    });
+  } catch (error) {
+    return next(
+      new AppError('Lo sentimos, algo salió mal al editar su oferta, intente nuevamente', 500)
+    );
   }
-
-  //Filter out unwanted fields names that are not allowed to be updated
-  const filteredBody = filterObj(req.body, allowedFields);
-
-  // Update offer document
-  const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
-
-  updatedOffer.save();
-
-  //Update TagOffer records asynchronously
-  if (tagsRef) updateTags(req.offer, tagsRef, TagOffer);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      offer: updatedOffer,
-    },
-  });
 });
 
 exports.deleteOffer = catchAsync(async (req, res, next) => {
@@ -134,15 +146,19 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
 exports.getAllOffers = factory.getAll(Offer);
 exports.getOffer = factory.getOne(Offer);
 
-exports.getMyOffers  = catchAsync(async (req, res, next) => {
-  let offers = []
-  if(req.user.organization){
-    offers = await Offer.find({ organization: {$in: req.user.organization}}).select("+updatedAt");
-  }else{
-    offers = await Offer.find({ createdBy: { $in: req.user.id} }).select("+updatedAt");
+exports.getMyOffers = catchAsync(async (req, res, next) => {
+  let offers = [];
+  if (req.user.organization) {
+    offers = await Offer.find({ organization: { $in: req.user.organization } }).select(
+      '+updatedAt'
+    );
+  } else {
+    offers = await Offer.find({ createdBy: { $in: req.user.id } }).select('+updatedAt');
   }
-  if(offers.length==0){
-    return next(new AppError('Usted no posee ninguna oferta asociada, le invitamos a crear una.', 400));
+  if (offers.length == 0) {
+    return next(
+      new AppError('Usted no posee ninguna oferta asociada, le invitamos a crear una.', 400)
+    );
   }
   res.status(201).json({
     status: 'success',
@@ -150,5 +166,4 @@ exports.getMyOffers  = catchAsync(async (req, res, next) => {
       offers,
     },
   });
-
 });
