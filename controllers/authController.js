@@ -270,7 +270,7 @@ exports.restricTo = (...admittedRoles) => {
       !admittedRoles.includes(req.user.organizationRole)
     ) {
       return next(
-        new AppError('Usted no puede realizar esta acción porque excede sus permisos', 402)
+        new AppError('Usted no puede realizar esta acción porque excede sus permisos', 401)
       );
     }
     next();
