@@ -184,7 +184,7 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
     );
   }
 
-  if (member == req.user) {
+  if (member.id == req.user.id) {
     return next(
       new AppError('Usted no se puede eliminar a su mismo, mediante esta opción.', 401)
     );
