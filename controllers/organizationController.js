@@ -168,9 +168,11 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
   });
 });
 exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
-  const member = await User.findById(req.body.id);
-  const originOrg = await Organization.findById(req.params.id).select('+members');
-  if (!originOrg.members.includes(member.id)) {
+  const member = await User.findById(req.params.id);
+  if(!member){
+    return next(new AppError('Este usuario no existe', 400));
+  }
+  if (!req.organization.members.includes(member.id)) {
     return next(new AppError('Este usuario no pertenece a esta organización', 401));
   }
   if (
@@ -188,25 +190,25 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
     );
   }
 
-  const index = originOrg.members.indexOf(member.id);
+  const index = req.organization.members.indexOf(member.id);
   if (index > -1) {
-    originOrg.members.splice(index, 1);
+    req.organization.members.splice(index, 1);
   }
 
   member.organizationRole = undefined;
   member.organization = undefined;
   member.isActive = false;
-  member.email = undefined;
+  member.email = member.email+Math.random();
   member.save({ validateBeforeSave: false });
 
-  const organization = await Organization.findByIdAndUpdate(req.params.id, originOrg, {
+  const organization = await Organization.findByIdAndUpdate(req.organization.id, req.organization, {
     new: true,
     runValidators: true,
   }).select('+members');
   organization.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'success',
+    status: 'member deleted',
     data: {
       organization,
     },

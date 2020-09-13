@@ -36,7 +36,8 @@ router
   .route('/members')
   .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
   .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
-  .delete(restricTo('supervisor', 'owner'), protectOrganization, removeOrganizationMember);
+
+router.delete('/members/:id', restricTo('supervisor','owner'), protectOrganization,removeOrganizationMember)
 
 router
   .route('/members/invite')
