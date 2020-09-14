@@ -127,7 +127,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   req.organization.save({validateBeforeSave: false});
 
   res.status(201).json({
-    status: 'member added',
+    status: 'successs',
     data: {
       user: req.user
     },
@@ -158,7 +158,7 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    status: 'member updated',
+    status: 'successs',
     data: {
       member: member,
     },
@@ -205,7 +205,7 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
   organization.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'member deleted',
+    status: 'successs',
     data: {
       organization,
     },
