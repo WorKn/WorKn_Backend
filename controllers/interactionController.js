@@ -64,7 +64,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
 
 exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
 
-  let interaction = await Interaction.findOne({offer: req.body.offer});
+  let interaction = await Interaction.findById(req.params.id).populate({path: 'offer', select: 'organization'});
   if(!interaction || interaction.state=="deleted"){
     return next(
       new AppError("Esta interacción no está disponible o no existe, lo sentimos.",400)
@@ -75,10 +75,9 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
       new AppError("Usted ya está en contacto, felicidades!!",400)
     )
   }
-  const user = req.user;
   
   if (interaction.offerer){
-    if(interaction.offerer==user.id){
+    if(interaction.offerer==req.user.id){
       return next(
         new AppError(
           'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta acepte, lo sentimos.',
@@ -94,7 +93,7 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
         )
       );
     } 
-  } else if(interaction.applicant && interaction.applicant==user.id){
+  } else if(interaction.applicant && interaction.applicant==req.user.id){
     return next(
       new AppError(
         'Usted no puede aceptar esta interacción, debe esperar que el ofertante acepte, lo sentimos.',
@@ -104,14 +103,13 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
   }  
 
   if(interaction.offerer){
-    if(interaction.applicant==user.id){
+    if(interaction.applicant==req.user.id){
       interaction.state="match";
     }else{
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
   }else{
-    offerer = await User.findOne({organization: req.offer.organization});
-    if(req.user.organization==offerer.organization){
+    if(String(req.user.organization) == String(interaction.offer.organization)){
       interaction.state="match";
     }
   }
@@ -128,7 +126,7 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
 });
 exports.cancelInteraction  = catchAsync( async(req,res,next) =>{
 
-  let interaction = await Interaction.findById(req.body.interaction).populate({path: 'offer', select: 'organization'});
+  let interaction = await Interaction.findById(req.params.id).populate({path: 'offer', select: 'organization'});
 
   if(!interaction || interaction.state=="deleted"){
     return next(
@@ -223,8 +221,6 @@ exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
       );
     }
   }
-
-  req.offer = offer;
 
   next();
 });
