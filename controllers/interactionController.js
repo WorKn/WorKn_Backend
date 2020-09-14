@@ -106,7 +106,6 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
   if(interaction.offerer){
     if(interaction.applicant==user.id){
       interaction.state="match";
-      console.log("matched in applicant");
     }else{
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
@@ -114,7 +113,6 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
     offerer = await User.findOne({organization: req.offer.organization});
     if(req.user.organization==offerer.organization){
       interaction.state="match";
-      console.log("matched in organization");
     }
   }
   
@@ -128,6 +126,44 @@ exports.acceptInteraction  = catchAsync( async(req,res,next) =>{
     },
   });
 });
+exports.cancelInteraction  = catchAsync( async(req,res,next) =>{
+
+  let interaction = await Interaction.findById(req.body.interaction).populate({path: 'offer', select: 'organization'});
+
+  if(!interaction || interaction.state=="deleted"){
+    return next(
+      new AppError("Esta interacción no está disponible o no existe, lo sentimos.",400)
+    )
+  }
+  if (interaction.state != 'match') {
+    if (interaction.offerer) {
+      if (
+        interaction.offerer == req.user.id ||
+        String(req.user.organization) == String(interaction.offer.organization)
+      ) {
+        interaction.state = 'deleted';
+      }
+    } else if (interaction.applicant == req.user.id) {
+      interaction.state = 'deleted';
+    }
+  }
+
+  if(interaction.state!="deleted"){
+    return next(
+      new AppError("Usted no está autorizado para realizar esta acción, lo sentimos.",401)
+    )
+  }
+  interaction.save();
+
+  res.status(200).json({
+    status: 'Interaction canceled',
+    data: {
+      message: 'Your interaction was canceled successfully',
+      interaction,
+    },
+  });
+});
+
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};

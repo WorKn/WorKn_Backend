@@ -54,7 +54,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   await owner.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'success',
+    status: 'organization created successfully',
     data: {
       organization,
     },
@@ -77,7 +77,7 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   }
   filteredBody = filterObj(req.body, allowedFields);
 
-  const updatedOrg = await Organization.findByIdAndUpdate(req.params.id, filteredBody, {
+  const updatedOrg = await Organization.findByIdAndUpdate(req.organization.id, filteredBody, {
     new: true,
     runValidators: true,
   });
@@ -104,8 +104,7 @@ exports.getAllOrganizations = factory.getAll(Organization);
 // Members-----------------
 
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
-  const originOrg = await Organization.findById(req.organization.id).select('+members');
-  if (!originOrg.members.includes(req.user.id)) {
+  if (!req.organization.members.includes(req.user.id)) {
     if (req.user.organization != req.organization.id) {
       return next(
         new AppError(
@@ -114,7 +113,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
         )
       );
     }
-    await originOrg.members.push(req.user);
+    req.organization.members.push(req.user);
   }else{
     return next(
       new AppError(
@@ -124,10 +123,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
     );
   }
 
-  const organization = await Organization.findByIdAndUpdate(req.organization.id, originOrg, {
-    new: true,
-    runValidators: true,
-  }).select('+members');
+  req.organization.save({validateBeforeSave: false});
 
   res.status(201).json({
     status: 'member added',
@@ -137,7 +133,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   });
 });
 exports.updateMemberRole = catchAsync(async (req, res, next) => {
-  member = await User.findById(req.body.member.id);
+  member = await User.findById(req.body.id);
   if (member.organizationRole == 'owner') {
     return next(
       new AppError(
@@ -161,9 +157,9 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    status: 'success',
+    status: 'member updated',
     data: {
-      organization: member,
+      member: member,
     },
   });
 });

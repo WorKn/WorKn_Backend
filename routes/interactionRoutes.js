@@ -5,9 +5,11 @@ const {
   getMyInteractions,
   protectOfferInteraction,
   acceptInteraction,
+  cancelInteraction,
 } = require('../controllers/interactionController');
 const router = express.Router();
 
+router.delete('/',protect,verifyEmailValidation, cancelInteraction)
 //Protected routes
 router.use(protect, verifyEmailValidation, protectOfferInteraction);
 
