@@ -154,7 +154,7 @@ exports.cancelInteraction  = catchAsync( async(req,res,next) =>{
   interaction.save();
 
   res.status(200).json({
-    status: 'Interaction canceled',
+    status: 'successs',
     data: {
       message: 'Your interaction was canceled successfully',
       interaction,
