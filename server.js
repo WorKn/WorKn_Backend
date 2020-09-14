@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const app = require('./app');
-const ioConnect = require('./controllers/chatController');
+const server = require('./app');
 
 //Unhandled Exceptions handling
 process.on('uncaughtException', (err) => {
@@ -35,11 +34,9 @@ mongoose
 //Start server
 const port = process.env.PORT || 8080;
 
-const server = app.listen(port, function () {
+server.listen(port, function () {
   console.log('App listening on port ' + port + '...');
 });
-
-ioConnect(server);
 
 //Rejected promises handling
 process.on('unhandledRejection', (err) => {
