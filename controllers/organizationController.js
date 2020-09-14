@@ -104,6 +104,7 @@ exports.getAllOrganizations = factory.getAll(Organization);
 // Members-----------------
 
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
+  req.organization =  await Organization.findById(req.user.organization).select('+members');
   if (!req.organization.members.includes(req.user.id)) {
     if (req.user.organization != req.organization.id) {
       return next(
