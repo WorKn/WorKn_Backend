@@ -54,7 +54,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   await owner.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'success',
+    status: 'organization created successfully',
     data: {
       organization,
     },
@@ -77,7 +77,7 @@ exports.editOrganization = catchAsync(async (req, res, next) => {
   }
   filteredBody = filterObj(req.body, allowedFields);
 
-  const updatedOrg = await Organization.findByIdAndUpdate(req.params.id, filteredBody, {
+  const updatedOrg = await Organization.findByIdAndUpdate(req.organization.id, filteredBody, {
     new: true,
     runValidators: true,
   });
@@ -104,8 +104,8 @@ exports.getAllOrganizations = factory.getAll(Organization);
 // Members-----------------
 
 exports.addOrganizationMember = catchAsync(async (req, res, next) => {
-  const originOrg = await Organization.findById(req.organization.id).select('+members');
-  if (!originOrg.members.includes(req.user.id)) {
+  req.organization =  await Organization.findById(req.user.organization).select('+members');
+  if (!req.organization.members.includes(req.user.id)) {
     if (req.user.organization != req.organization.id) {
       return next(
         new AppError(
@@ -114,7 +114,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
         )
       );
     }
-    await originOrg.members.push(req.user);
+    req.organization.members.push(req.user);
   }else{
     return next(
       new AppError(
@@ -124,20 +124,17 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
     );
   }
 
-  const organization = await Organization.findByIdAndUpdate(req.organization.id, originOrg, {
-    new: true,
-    runValidators: true,
-  }).select('+members');
+  req.organization.save({validateBeforeSave: false});
 
   res.status(201).json({
-    status: 'member added',
+    status: 'successs',
     data: {
       user: req.user
     },
   });
 });
 exports.updateMemberRole = catchAsync(async (req, res, next) => {
-  member = await User.findById(req.body.member.id);
+  member = await User.findById(req.body.id);
   if (member.organizationRole == 'owner') {
     return next(
       new AppError(
@@ -161,16 +158,18 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    status: 'success',
+    status: 'successs',
     data: {
-      organization: member,
+      member: member,
     },
   });
 });
 exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
-  const member = await User.findById(req.body.id);
-  const originOrg = await Organization.findById(req.params.id).select('+members');
-  if (!originOrg.members.includes(member.id)) {
+  const member = await User.findById(req.params.id);
+  if(!member){
+    return next(new AppError('Este usuario no existe', 400));
+  }
+  if (!req.organization.members.includes(member.id)) {
     return next(new AppError('Este usuario no pertenece a esta organización', 401));
   }
   if (
@@ -182,31 +181,31 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
     );
   }
 
-  if (member == req.user) {
+  if (member.id == req.user.id) {
     return next(
       new AppError('Usted no se puede eliminar a su mismo, mediante esta opción.', 401)
     );
   }
 
-  const index = originOrg.members.indexOf(member.id);
+  const index = req.organization.members.indexOf(member.id);
   if (index > -1) {
-    originOrg.members.splice(index, 1);
+    req.organization.members.splice(index, 1);
   }
 
   member.organizationRole = undefined;
   member.organization = undefined;
   member.isActive = false;
-  member.email = undefined;
+  member.email = member.email+Math.random();
   member.save({ validateBeforeSave: false });
 
-  const organization = await Organization.findByIdAndUpdate(req.params.id, originOrg, {
+  const organization = await Organization.findByIdAndUpdate(req.organization.id, req.organization, {
     new: true,
     runValidators: true,
   }).select('+members');
   organization.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'success',
+    status: 'successs',
     data: {
       organization,
     },
