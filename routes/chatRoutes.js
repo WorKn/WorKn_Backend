@@ -1,12 +1,22 @@
 const express = require('express');
-const { createChat, protectChat } = require('./../controllers/chatController2');
 const {
-  restricTo,
-  protect,
-  verifyEmailValidation,
-} = require('./../controllers/authController');
+  createChat,
+  validateInteraction,
+  protectChat,
+  createMessage,
+  getChatMessages,
+  getMyChats,
+} = require('../controllers/chatController');
+const { protect, verifyEmailValidation } = require('./../controllers/authController');
 const router = express.Router();
 
-router.post('/', protect, protectChat, createChat);
+router.use(protect);
+
+router.route('/').post(validateInteraction, createChat).get(getMyChats);
+
+router
+  .route('/:id/messages')
+  .post(protectChat, createMessage)
+  .get(protectChat, getChatMessages);
 
 module.exports = router;

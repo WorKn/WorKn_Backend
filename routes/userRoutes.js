@@ -22,7 +22,7 @@ const router = express.Router();
 
 //Routes
 
-router.use('/chats', chatRouter);
+router.use('/me/chats', chatRouter);
 
 router.post('/signup', signup);
 router.post('/login', login);

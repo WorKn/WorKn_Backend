@@ -242,7 +242,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   //Validate token and decode
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id).select('+chats');
 
   //Check if the user owner of the token still exists
   if (!currentUser) {
