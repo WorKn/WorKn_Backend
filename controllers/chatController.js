@@ -113,8 +113,8 @@ exports.createChat = catchAsync(async (req, res, next) => {
     req.user.chats.push(chat.id);
     user2.chats.push(chat.id);
 
-    await req.user.save();
-    await user2.save();
+    await req.user.save({ validateBeforeSave: false });
+    await user2.save({ validateBeforeSave: false });
   }
 
   const io = req.app.get('socketio');
