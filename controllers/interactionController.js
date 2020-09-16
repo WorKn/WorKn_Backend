@@ -69,7 +69,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   });
   if (!interaction || interaction.state == 'deleted') {
     return next(
-      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 400)
+      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 404)
     );
   }
   if (interaction.state == 'match') {
@@ -77,18 +77,25 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   }
 
   if (interaction.offerer) {
-    if (
-      interaction.offerer == req.user.id ||
-      interaction.offer.organization.equals(req.user.organization)
-    ) {
-      return next(
-        new AppError(
-          'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida, lo sentimos.',
-          400
-        )
+    if (req.user.organization) {
+      if (
+        interaction.offerer.equals(req.user.id) ||
+        interaction.offer.organization.equals(req.user.organization)
+      ) {
+        return next(
+          new AppError(
+            'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida, lo sentimos.',
+            400
+          )
+        );
+      }
+    } else if (interaction.offerer.equals(req.user.id)) {
+      new AppError(
+        'Usted no puede aceptar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida, lo sentimos.',
+        400
       );
     }
-  } else if (interaction.applicant && interaction.applicant == req.user.id) {
+  } else if (interaction.applicant && interaction.applicant.equals(req.user.id)) {
     return next(
       new AppError(
         'Usted no puede aceptar esta interacción, debe esperar que el ofertante decida, lo sentimos.',
@@ -98,7 +105,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   }
 
   if (interaction.offerer) {
-    if (interaction.applicant == req.user.id) {
+    if (interaction.applicant.equals(req.user.id)) {
       interaction.state = 'match';
     } else {
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
@@ -127,7 +134,7 @@ exports.rejectInteraction = catchAsync(async (req, res, next) => {
   });
   if (!interaction || interaction.state == 'deleted') {
     return next(
-      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 400)
+      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 404)
     );
   }
   if (interaction.state == 'match') {
@@ -135,19 +142,27 @@ exports.rejectInteraction = catchAsync(async (req, res, next) => {
   }
 
   if (interaction.offerer) {
-    if (
-      interaction.offerer == req.user.id ||
-      interaction.offer.organization.equals(req.user.organization)
-    ) {
-      return next(
-        new AppError(
-          'Usted no puede rechazar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida,' +
-            'lo sentimos. Si ya no está interesado en este usuario, la puede cancelar. ',
-          400
-        )
+    if (req.user.organization) {
+      if (
+        interaction.offerer.equals(req.user.id) ||
+        interaction.offer.organization.equals(req.user.organization)
+      ) {
+        return next(
+          new AppError(
+            'Usted no puede rechazar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida,' +
+              'lo sentimos. Si ya no está interesado en este usuario, la puede cancelar. ',
+            400
+          )
+        );
+      }
+    } else if (interaction.offerer.equals(req.user.id)) {
+      new AppError(
+        'Usted no puede rechazar esta interacción, debe esperar que el usuario a quien le ofreció la oferta decida,' +
+          'lo sentimos. Si ya no está interesado en este usuario, la puede cancelar. ',
+        400
       );
     }
-  } else if (interaction.applicant && interaction.applicant == req.user.id) {
+  } else if (interaction.applicant && interaction.applicant.equals(req.user.id)) {
     return next(
       new AppError(
         'Usted no puede rechazar esta interacción, debe esperar que el ofertante tome acción, lo sentimos.' +
@@ -158,15 +173,13 @@ exports.rejectInteraction = catchAsync(async (req, res, next) => {
   }
 
   if (interaction.offerer) {
-    if (interaction.applicant == req.user.id) {
+    if (interaction.applicant.equals(req.user.id)) {
       interaction.rejected = true;
     } else {
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
-  } else {
-    if (req.user.organization.equals(interaction.offer.organization)) {
-      interaction.rejected = true;
-    }
+  } else if (req.user.organization.equals(interaction.offer.organization)) {
+    interaction.rejected = true;
   }
 
   interaction.save();
@@ -188,18 +201,22 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 
   if (!interaction || interaction.state == 'deleted') {
     return next(
-      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 400)
+      new AppError('Esta interacción no está disponible o no existe, lo sentimos.', 404)
     );
   }
   if (interaction.state != 'match') {
     if (interaction.offerer) {
-      if (
-        interaction.offerer == req.user.id ||
-        req.user.organization.equals(interaction.offer.organization)
-      ) {
+      if (req.user.organization) {
+        if (
+          interaction.offerer.equals(req.user.id) ||
+          req.user.organization.equals(interaction.offer.organization)
+        ) {
+          interaction.state = 'deleted';
+        }
+      } else if (interaction.offerer.equals(req.user.id)) {
         interaction.state = 'deleted';
       }
-    } else if (interaction.applicant == req.user.id) {
+    } else if (interaction.applicant.equals(req.user.id)) {
       interaction.state = 'deleted';
     }
   }
