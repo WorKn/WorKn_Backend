@@ -154,23 +154,29 @@ exports.createMessage = catchAsync(async (req, res, next) => {
   });
 });
 
+const userChatFields = '_id name lastname profilePicture';
+
 exports.getMyChats = catchAsync(async (req, res, next) => {
   // const userToPopulate = req.user.id == req.chat.user1 ? 'user2' : 'user1';
 
   const user = await req.user
     .populate({
       path: 'chats',
-      select: '-__v -messages',
+      select: '_id',
       populate: [
+        {
+          path: 'lastMessage',
+          select: '-__v',
+        },
         {
           path: 'user1',
           match: { _id: { $ne: req.user.id } },
-          select: '_id name lastname profilePicture',
+          select: userChatFields,
         },
         {
           path: 'user2',
           match: { _id: { $ne: req.user.id } },
-          select: '_id name lastname profilePicture',
+          select: userChatFields,
         },
       ],
     })
@@ -178,6 +184,7 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    results: user.chats.length,
     data: {
       chats: user.chats,
     },
@@ -189,16 +196,15 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
 
   let chat = await req.chat
     .populate({ path: 'messages', select: '-__v' })
-    // .populate({ path: userToPopulate, select: '_id name lastname profilePicture' })
     .populate({
       path: 'user1',
       match: { _id: { $ne: req.user.id } },
-      select: '_id name lastname profilePicture',
+      select: userChatFields,
     })
     .populate({
       path: 'user2',
       match: { _id: { $ne: req.user.id } },
-      select: '_id name lastname profilePicture',
+      select: userChatFields,
     })
     .execPopulate();
 
