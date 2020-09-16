@@ -80,7 +80,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
     if (req.user.organization) {
       if (
         interaction.offerer.equals(req.user.id) ||
-        interaction.offer.organization.equals(req.user.organization)
+        req.user.organization.equals(interaction.offerer.organization)
       ) {
         return next(
           new AppError(
@@ -145,7 +145,7 @@ exports.rejectInteraction = catchAsync(async (req, res, next) => {
     if (req.user.organization) {
       if (
         interaction.offerer.equals(req.user.id) ||
-        interaction.offer.organization.equals(req.user.organization)
+        req.user.organization.equals(interaction.offerer.organization)
       ) {
         return next(
           new AppError(
