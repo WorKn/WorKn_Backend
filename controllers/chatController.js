@@ -185,10 +185,8 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
       chat.lastMessage = await Message.findById(chat.lastMessage).select('-__v');
 
       const userToRename = req.user.id == chat.user1 ? 'user1' : 'user2';
-      chat = renameObjtKey(chat, userToRename, 'user');
+      chat = renameChatUser(chat, userToRename);
 
-      chat.user1 = undefined;
-      chat.user2 = undefined;
       chat.messages = undefined;
       chat.id = undefined;
 
@@ -220,10 +218,7 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
   chat.lastMessage = undefined;
 
   chat = JSON.parse(JSON.stringify(chat));
-  chat = renameObjtKey(chat, userToPopulate, 'user');
-
-  chat.user1 = undefined;
-  chat.user2 = undefined;
+  chat = renameChatUser(chat, userToPopulate);
 
   res.status(200).json({
     status: 'success',
@@ -232,3 +227,12 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const renameChatUser = (chat, userToRename) => {
+  chat = renameObjtKey(chat, userToRename, 'user');
+
+  chat.user1 = undefined;
+  chat.user2 = undefined;
+
+  return chat;
+};
