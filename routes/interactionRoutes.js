@@ -6,10 +6,12 @@ const {
   protectOfferInteraction,
   acceptInteraction,
   cancelInteraction,
+  rejectInteraction,
 } = require('../controllers/interactionController');
 const router = express.Router();
 router.patch('/accept/:id', protect, acceptInteraction);
-router.delete('/:id',protect,verifyEmailValidation, cancelInteraction)
+router.patch('/reject/:id', protect, rejectInteraction);
+router.delete('/:id', protect, verifyEmailValidation, cancelInteraction);
 
 //Protected routes
 router.use(protect, verifyEmailValidation, protectOfferInteraction);
