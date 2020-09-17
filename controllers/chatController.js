@@ -163,10 +163,6 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
       path: 'chats',
       select: '_id messages',
       populate: [
-        // {
-        //   path: 'lastMessage',
-        //   select: '-__v',
-        // },
         {
           path: 'user1',
           match: { _id: { $ne: req.user.id } },
@@ -183,6 +179,7 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
 
   let chats = JSON.parse(JSON.stringify(user.chats));
 
+  //TODO: Refactor this in the future
   const newChats = await Promise.all(
     chats.map(async (chat) => {
       chat.lastMessage = await Message.findById(chat.lastMessage).select('-__v');
@@ -211,20 +208,6 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
 exports.getChatMessages = catchAsync(async (req, res, next) => {
   const userToPopulate = req.user.id == req.chat.user1 ? 'user2' : 'user1';
 
-  // let chat = await req.chat
-  //   .populate({ path: 'messages', select: '-__v' })
-  //   .populate({
-  //     path: 'user1',
-  //     match: { _id: { $ne: req.user.id } },
-  //     select: userChatFields,
-  //   })
-  //   .populate({
-  //     path: 'user2',
-  //     match: { _id: { $ne: req.user.id } },
-  //     select: userChatFields,
-  //   })
-  //   .execPopulate();
-
   let chat = await req.chat
     .populate({ path: 'messages', select: '-__v' })
     .populate({
@@ -238,9 +221,6 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
 
   chat = JSON.parse(JSON.stringify(chat));
   chat = renameObjtKey(chat, userToPopulate, 'user');
-
-  // if (userToPopulate == 'user1') chat.user = chat.user1;
-  // else chat.user = chat.user2;
 
   chat.user1 = undefined;
   chat.user2 = undefined;
