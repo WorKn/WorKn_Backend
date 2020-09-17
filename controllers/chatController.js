@@ -1,5 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const renameObjtKey = require('../utils/renameObjKey');
 
 const Chat = require('../models/chatModel');
 const User = require('../models/userModel');
@@ -12,7 +13,7 @@ exports.validateInteraction = catchAsync(async (req, res, next) => {
   });
 
   if (!interaction) {
-    return next(new AppError('Interación inválida.', 404));
+    return next(new AppError('La interación no existe.', 404));
   }
 
   if (interaction.state != 'match') {
@@ -157,17 +158,15 @@ exports.createMessage = catchAsync(async (req, res, next) => {
 const userChatFields = '_id name lastname profilePicture';
 
 exports.getMyChats = catchAsync(async (req, res, next) => {
-  // const userToPopulate = req.user.id == req.chat.user1 ? 'user2' : 'user1';
-
   const user = await req.user
     .populate({
       path: 'chats',
-      select: '_id',
+      select: '_id messages',
       populate: [
-        {
-          path: 'lastMessage',
-          select: '-__v',
-        },
+        // {
+        //   path: 'lastMessage',
+        //   select: '-__v',
+        // },
         {
           path: 'user1',
           match: { _id: { $ne: req.user.id } },
@@ -182,38 +181,72 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
     })
     .execPopulate();
 
+  let chats = JSON.parse(JSON.stringify(user.chats));
+
+  const newChats = await Promise.all(
+    chats.map(async (chat) => {
+      chat.lastMessage = await Message.findById(chat.lastMessage).select('-__v');
+
+      const userToRename = req.user.id == chat.user1 ? 'user1' : 'user2';
+      chat = renameObjtKey(chat, userToRename, 'user');
+
+      chat.user1 = undefined;
+      chat.user2 = undefined;
+      chat.messages = undefined;
+      chat.id = undefined;
+
+      return chat;
+    })
+  );
+
   res.status(200).json({
     status: 'success',
-    results: user.chats.length,
+    results: newChats.length,
     data: {
-      chats: user.chats,
+      chats: newChats,
     },
   });
 });
 
 exports.getChatMessages = catchAsync(async (req, res, next) => {
-  // const userToPopulate = req.user.id == req.chat.user1 ? 'user2' : 'user1';
+  const userToPopulate = req.user.id == req.chat.user1 ? 'user2' : 'user1';
+
+  // let chat = await req.chat
+  //   .populate({ path: 'messages', select: '-__v' })
+  //   .populate({
+  //     path: 'user1',
+  //     match: { _id: { $ne: req.user.id } },
+  //     select: userChatFields,
+  //   })
+  //   .populate({
+  //     path: 'user2',
+  //     match: { _id: { $ne: req.user.id } },
+  //     select: userChatFields,
+  //   })
+  //   .execPopulate();
 
   let chat = await req.chat
     .populate({ path: 'messages', select: '-__v' })
     .populate({
-      path: 'user1',
-      match: { _id: { $ne: req.user.id } },
-      select: userChatFields,
-    })
-    .populate({
-      path: 'user2',
-      match: { _id: { $ne: req.user.id } },
+      path: userToPopulate,
       select: userChatFields,
     })
     .execPopulate();
 
-  // chat = renameObtKey(chat, userToPopulate, 'user');
+  chat.isLive = undefined;
+  chat.lastMessage = undefined;
+
+  // chat = renameObjtKey(chat, 'user1', 'user');
+  // chat.favFood = 'Milk';
+
+  chat = JSON.parse(JSON.stringify(chat));
+  chat = renameObjtKey(chat, userToPopulate, 'user');
+
   // if (userToPopulate == 'user1') chat.user = chat.user1;
   // else chat.user = chat.user2;
 
-  // chat.user1 = undefined;
-  // chat.user2 = undefined;
+  chat.user1 = undefined;
+  chat.user2 = undefined;
 
   res.status(200).json({
     status: 'success',
