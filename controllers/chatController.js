@@ -236,9 +236,6 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
   chat.isLive = undefined;
   chat.lastMessage = undefined;
 
-  // chat = renameObjtKey(chat, 'user1', 'user');
-  // chat.favFood = 'Milk';
-
   chat = JSON.parse(JSON.stringify(chat));
   chat = renameObjtKey(chat, userToPopulate, 'user');
 
