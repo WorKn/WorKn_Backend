@@ -120,6 +120,7 @@ const getAllFieldsHandler = (Model, query) => {
         select: fieldsToShow,
       });
 
+      //TODO: do this populate conditionaly, if there is no org
       query.populate({
         path: 'createdBy',
         select: fieldsToShow,
