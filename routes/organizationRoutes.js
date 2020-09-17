@@ -29,13 +29,13 @@ router.get('/:id', getOrganization);
 //Protected routes
 router.use(protect);
 
-router.post('/',restricTo('owner'), protectOrganization, createOrganization);
+router.post('/',restricTo('owner'), createOrganization);
 router.patch('/',restricTo('owner'), protectOrganization, editOrganization);
 
 router
   .route('/members')
   .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
-  .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
+  .patch(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
 
 router.delete('/members/:id', restricTo('supervisor','owner'), protectOrganization,removeOrganizationMember)
 
