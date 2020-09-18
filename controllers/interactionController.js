@@ -66,6 +66,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   let interaction = await Interaction.findById(req.params.id).populate({
     path: 'offer',
     select: 'organization',
+    select: 'createdBy'
   });
   if (!interaction || interaction.state == 'deleted') {
     return next(
@@ -111,8 +112,14 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
   } else {
-    if (req.user.organization.equals(interaction.offer.organization)) {
+    if (req.user.organization) {
+      if (req.user.organization.equals(interaction.offer.organization)) {
+        interaction.state = 'match';
+        interaction.offerer = req.user.id;
+      }
+    } else if (interaction.offer.createdBy.equals(req.user.id)) {
       interaction.state = 'match';
+      interaction.offerer = req.user.id;
     }
   }
 
