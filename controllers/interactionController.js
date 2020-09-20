@@ -247,15 +247,30 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};
+  const fieldsToShow = '_id name email profilePicture';
 
   if (req.user.userType == 'applicant') {
-    interactions = await Interaction.find({ applicant: req.user.id }).populate({
-      path: 'offer',
-    });
+    interactions = await Interaction.find({ applicant: req.user.id })
+      .populate({
+        path: 'offer',
+        select: '-__v',
+        populate: [
+          { path: 'category', select: '-__v' },
+          { path: 'organization', select: fieldsToShow + ' phone' },
+          {
+            path: 'createdBy',
+            select: fieldsToShow,
+          },
+        ],
+      })
+      .select('-__v');
   } else if (req.user.userType == 'offerer') {
-    interactions = await Interaction.find({ offer: req.query.offer }).populate({
-      path: 'applicant',
-    });
+    interactions = await Interaction.find({ offer: req.query.offer })
+      .populate({
+        path: 'applicant',
+        select: fieldsToShow,
+      })
+      .select('-__v');
   }
 
   parsedInteractions.applied = interactions.filter(

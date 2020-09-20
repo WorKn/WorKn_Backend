@@ -114,10 +114,10 @@ const getOneFieldsHandler = (Model, query, req) => {
 const getAllFieldsHandler = (Model, query) => {
   switch (Model.modelName) {
     case 'Offer':
-      const fieldsToShow = '_id name phone email profilePicture';
+      const fieldsToShow = '_id name email profilePicture';
       query.populate({
         path: 'organization',
-        select: fieldsToShow,
+        select: fieldsToShow + ' phone',
       });
 
       //TODO: do this populate conditionaly, if there is no org
