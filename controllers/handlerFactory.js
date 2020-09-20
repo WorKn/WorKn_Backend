@@ -132,6 +132,7 @@ const getAllFieldsHandler = (Model, query) => {
       });
       break;
     case 'User':
+      query.find({ isSignupCompleted: undefined });
       query.populate({
         path: 'category',
         select: '-__v',
