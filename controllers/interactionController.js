@@ -33,7 +33,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
     interactionState = 'applied';
     interactionApplicant = user.id;
   } else if (userType == 'offerer') {
-    interactionState = 'interesed';
+    interactionState = 'interested';
     interactionOfferer = user.id;
     interactionApplicant = req.body.applicant;
   }
@@ -66,7 +66,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   let interaction = await Interaction.findById(req.params.id).populate({
     path: 'offer',
     select: 'organization',
-    select: 'createdBy'
+    select: 'createdBy',
   });
   if (!interaction || interaction.state == 'deleted') {
     return next(
@@ -261,8 +261,8 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   parsedInteractions.applied = interactions.filter(
     (interaction) => interaction.state === 'applied'
   );
-  parsedInteractions.interesed = interactions.filter(
-    (interaction) => interaction.state === 'interesed'
+  parsedInteractions.interested = interactions.filter(
+    (interaction) => interaction.state === 'interested'
   );
   parsedInteractions.match = interactions.filter(
     (interaction) => interaction.state === 'match'
