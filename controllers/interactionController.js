@@ -253,7 +253,7 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
       path: 'offer',
     });
   } else if (req.user.userType == 'offerer') {
-    interactions = await Interaction.find({ offer: req.body.offer }).populate({
+    interactions = await Interaction.find({ offer: req.query.offer }).populate({
       path: 'applicant',
     });
   }
@@ -267,6 +267,7 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   parsedInteractions.match = interactions.filter(
     (interaction) => interaction.state === 'match'
   );
+
   res.status(200).json({
     status: 'success',
     results: interactions.length,
@@ -278,7 +279,11 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
 
 exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
   if (req.user.userType != 'offerer') return next();
-  offer = await Offer.findById(req.body.offer);
+
+  let offer = undefined;
+
+  if (req.body.offer) offer = await Offer.findById(req.body.offer);
+  else if (req.query.offer) offer = await Offer.findById(req.query.offer);
 
   if (!offer) {
     return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
