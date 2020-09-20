@@ -268,7 +268,7 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
     interactions = await Interaction.find({ offer: req.query.offer })
       .populate({
         path: 'applicant',
-        select: fieldsToShow,
+        populate: [{ path: 'category', select: '-__v' }],
       })
       .select('-__v');
   }
