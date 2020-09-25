@@ -61,7 +61,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.editOrganization = catchAsync(async (req, res, next) => {
+exports.editMyOrganization = catchAsync(async (req, res, next) => {
   if (req.body.members) {
     return next(
       new AppError(
