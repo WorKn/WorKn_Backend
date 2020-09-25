@@ -28,7 +28,7 @@ exports.validateCreateInteraction = catchAsync(async (req, res, next) => {
       );
     }
   }
-  //test
+
   next();
 });
 
