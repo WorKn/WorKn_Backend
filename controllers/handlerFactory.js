@@ -80,13 +80,15 @@ exports.getAll = (Model) =>
 
     features.query = getAllFieldsHandler(Model, features.query);
     //Execute query
-    const doc = await features.query;
+    let docs = await features.query;
+
+    docs = filterDocuments(Model, docs);
 
     res.status(200).json({
       status: 'success',
-      results: doc.length,
+      results: docs.length,
       data: {
-        data: doc,
+        data: docs,
       },
     });
   });
@@ -132,17 +134,29 @@ const getAllFieldsHandler = (Model, query) => {
       });
       break;
     case 'User':
-      query.find({ isSignupCompleted: undefined });
       query.populate({
         path: 'category',
         select: '-__v',
       });
 
-      query.select('-isSignupCompleted -isEmailValidated');
+      query.select('-isEmailValidated');
       break;
 
     default:
       break;
   }
   return query;
+};
+
+const filterDocuments = (Model, docs) => {
+  switch (Model.modelName) {
+    case 'User':
+      docs = docs.filter((doc) => doc.isSignupCompleted);
+      break;
+
+    default:
+      break;
+  }
+
+  return docs;
 };
