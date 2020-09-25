@@ -14,7 +14,7 @@ const router = express.Router();
 
 //Protected routes
 router.use(protect, verifyEmailValidation);
-
+//test
 router.patch('/accept/:id', validateAcceptInteraction, acceptInteraction);
 router.patch('/reject/:id', rejectInteraction);
 router.delete('/:id', cancelInteraction);
