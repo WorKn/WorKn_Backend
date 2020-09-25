@@ -5,51 +5,60 @@ const Offer = require('./../models/offerModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-exports.createInteraction = catchAsync(async (req, res, next) => {
-  const user = req.user;
-  userType = user.userType;
-  const interactionOffer = req.body.offer;
-  let interactionState, interactionOfferer, interactionApplicant;
-  const target = await User.findById(req.body.applicant);
+exports.validateCreateInteraction = catchAsync(async (req, res, next) => {
+  if (req.body.offer) {
+    return next(new AppError('Por favor, provea una oferta.', 400));
+  }
 
-  if (userType === 'offerer') {
-    if (!target) {
-      return next(new AppError('Usuario no encontrado.', 404));
+  if (req.user.userType === 'offerer') {
+    const applicant = await User.findById(req.body.applicant);
+
+    if (!applicant) {
+      return next(new AppError('Aplicante no encontrado.', 404));
     }
-    if (user.id == req.body.applicant) {
-      return next(new AppError('Usted no puede mostrar interes en si mismo.', 400));
+    if (req.user.id == req.body.applicant) {
+      return next(new AppError('Usted no puede mostrar interés en si mismo.', 400));
     }
-    if (userType == target.userType) {
+    if (req.user.userType == applicant.userType) {
       return next(
         new AppError(
-          'Usted no puede mostrar interes por alguien de su misma categoria, por favor, seleccione otro usuario.',
+          'Usted no puede mostrar interés por alguien de su misma categoria, por favor, seleccione otro usuario.',
           400
         )
       );
     }
   }
 
-  if (userType == 'applicant') {
-    interactionState = 'applied';
-    interactionApplicant = user.id;
-  } else if (userType == 'offerer') {
+  next();
+});
+
+exports.createInteraction = catchAsync(async (req, res, next) => {
+  let interactionState, interactionOfferer, interactionApplicant;
+
+  if (req.user.userType === 'offerer') {
     interactionState = 'interested';
-    interactionOfferer = user.id;
+    interactionOfferer = req.user.id;
     interactionApplicant = req.body.applicant;
+  } else if (req.user.userType == 'applicant') {
+    interactionState = 'applied';
+    interactionApplicant = req.user.id;
   }
-  let interaction = await Interaction.findOne({
-    offer: interactionOffer,
+
+  const interaction = await Interaction.findOne({
+    offer: req.body.offer,
     applicant: interactionApplicant,
-    offerer: interactionOfferer,
+    offerer: { $in: [interactionOfferer, undefined] },
   });
+
   if (interaction) {
     return next(
       new AppError('Usted ya tiene una interacción con esta oferta, por favor, verifique', 400)
     );
   }
-  interaction = await Interaction.create({
+
+  const newInteraction = await Interaction.create({
     state: interactionState,
-    offer: interactionOffer,
+    offer: req.body.offer,
     applicant: interactionApplicant,
     offerer: interactionOfferer,
   });
@@ -57,12 +66,12 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'success',
     data: {
-      interaction,
+      interaction: newInteraction,
     },
   });
 });
 
-exports.acceptInteraction = catchAsync(async (req, res, next) => {
+exports.validateAcceptInteraction = catchAsync(async (req, res, next) => {
   let interaction = await Interaction.findById(req.params.id).populate({
     path: 'offer',
     select: 'organization',
@@ -96,7 +105,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
         400
       );
     }
-  } else if (interaction.applicant && interaction.applicant.equals(req.user.id)) {
+  } else if (interaction.applicant.equals(req.user.id)) {
     return next(
       new AppError(
         'Usted no puede aceptar esta interacción, debe esperar que el ofertante decida, lo sentimos.',
@@ -105,21 +114,30 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
     );
   }
 
+  req.interaction = interaction;
+
+  next();
+});
+
+exports.acceptInteraction = catchAsync(async (req, res, next) => {
+  let interaction = req.interaction;
+
   if (interaction.offerer) {
     if (interaction.applicant.equals(req.user.id)) {
       interaction.state = 'match';
     } else {
-      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
+      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 403));
     }
   } else {
-    if (req.user.organization) {
-      if (req.user.organization.equals(interaction.offer.organization)) {
-        interaction.state = 'match';
-        interaction.offerer = req.user.id;
-      }
-    } else if (interaction.offer.createdBy.equals(req.user.id)) {
+    if (
+      (req.user.organization &&
+        req.user.organization.equals(interaction.offer.organization)) ||
+      interaction.offer.createdBy.equals(req.user.id)
+    ) {
       interaction.state = 'match';
       interaction.offerer = req.user.id;
+    } else {
+      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 403));
     }
   }
 
