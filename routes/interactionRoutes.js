@@ -7,21 +7,16 @@ const {
   acceptInteraction,
   cancelInteraction,
   rejectInteraction,
-  validateCreateInteraction,
-  validateAcceptInteraction,
 } = require('../controllers/interactionController');
 const router = express.Router();
+router.patch('/accept/:id', protect, acceptInteraction);
+router.patch('/reject/:id', protect, rejectInteraction);
+router.delete('/:id', protect, verifyEmailValidation, cancelInteraction);
 
 //Protected routes
-router.use(protect, verifyEmailValidation);
+router.use(protect, verifyEmailValidation, protectOfferInteraction);
 
-router.patch('/accept/:id', validateAcceptInteraction, acceptInteraction);
-router.patch('/reject/:id', rejectInteraction);
-router.delete('/:id', cancelInteraction);
-
-router.use(protectOfferInteraction);
-
-router.post('/', validateCreateInteraction, createInteraction);
+router.post('/', createInteraction);
 router.get('/me', getMyInteractions);
 
 module.exports = router;
