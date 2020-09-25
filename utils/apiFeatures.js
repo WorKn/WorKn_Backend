@@ -14,7 +14,10 @@ class APIFeatures {
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|le)\b/g, (match) => `$${match}`);
 
-    this.query = this.query.find(JSON.parse(queryStr));
+    // Parse "like" keywords to regex expressions
+    const queryStrToObj = parseToRegex(JSON.parse(queryStr));
+
+    this.query = this.query.find(queryStrToObj);
 
     return this;
   }
@@ -51,5 +54,24 @@ class APIFeatures {
     return this;
   }
 }
+
+const parseToRegex = (obj) => {
+  Object.keys(obj).forEach((key) => {
+    if (obj[key].like) {
+      const value = escapeRegex(obj[key].like);
+
+      // Note: the 'i' keyword creates a case-insensitive regular expression.
+      // However, if we are working with a large collection, it may not be efficient.
+      const regex = new RegExp(value, 'i');
+      obj[key] = regex;
+    }
+  });
+
+  return obj;
+};
+
+const escapeRegex = (string) => {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
 
 module.exports = APIFeatures;
