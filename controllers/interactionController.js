@@ -6,6 +6,10 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 
 exports.validateCreateInteraction = catchAsync(async (req, res, next) => {
+  if (req.body.offer) {
+    return next(new AppError('Por favor, provea una oferta.', 400));
+  }
+
   if (req.user.userType === 'offerer') {
     const applicant = await User.findById(req.body.applicant);
 
@@ -43,7 +47,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   const interaction = await Interaction.findOne({
     offer: req.body.offer,
     applicant: interactionApplicant,
-    offerer: interactionOfferer,
+    offerer: { $in: [interactionOfferer, undefined] },
   });
 
   if (interaction) {
@@ -307,6 +311,8 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
 });
 
 exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
+  if (req.user.userType != 'offerer') return next();
+
   let offer = undefined;
 
   if (req.body.offer) offer = await Offer.findById(req.body.offer);
@@ -315,8 +321,6 @@ exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
   if (!offer) {
     return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
   }
-
-  if (req.user.userType != 'offerer') return next();
 
   if (req.user.id != offer.createdBy) {
     if (req.user.organization) {
