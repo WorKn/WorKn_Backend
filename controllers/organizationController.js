@@ -54,7 +54,8 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
   await owner.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'organization created successfully',
+    status: 'success',
+    message: 'Organization created successfully',
     data: {
       organization,
     },
@@ -127,7 +128,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   req.organization.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'successs',
+    status: 'success',
     data: {
       user: req.user,
     },
@@ -158,7 +159,7 @@ exports.updateMemberRole = catchAsync(async (req, res, next) => {
   member.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    status: 'successs',
+    status: 'success',
     data: {
       member: member,
     },
@@ -209,7 +210,7 @@ exports.removeOrganizationMember = catchAsync(async (req, res, next) => {
   organization.save({ validateBeforeSave: false });
 
   res.status(201).json({
-    status: 'successs',
+    status: 'success',
     data: {
       organization,
     },
@@ -282,9 +283,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      message: 'Invitation sent',
-    },
+    message: 'Invitation sent',
   });
 });
 
@@ -305,8 +304,8 @@ exports.validateMemberInvitation = catchAsync(async (req, res, next) => {
 exports.getInvitationInfo = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
+    message: 'Access authorized',
     data: {
-      message: 'access authorized',
       organization: req.organization,
       email: req.invitedEmail,
       invitedRole: req.invitedRole,
