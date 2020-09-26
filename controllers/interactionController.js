@@ -127,8 +127,8 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    message: 'Match stablished',
     data: {
-      message: 'Match stablished',
       interaction,
     },
   });
@@ -193,8 +193,8 @@ exports.rejectInteraction = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    message: 'Interaction rejected',
     data: {
-      message: 'Interaction rejected',
       interaction,
     },
   });
@@ -237,8 +237,8 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    message: 'Your interaction was canceled successfully',
     data: {
-      message: 'Your interaction was canceled successfully',
       interaction,
     },
   });
