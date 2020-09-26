@@ -167,3 +167,13 @@ exports.getMyOffers = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getOfferByTag  = catchAsync(async(req, res, next)=>{
+  if(req.query.tags){
+    console.log("do redirect");
+    this.getAllOffers(req,res,next);
+  }else{
+    console.log("doing normal");
+    return this.getAllOffers(req,res,next);
+  }
+});
