@@ -8,176 +8,182 @@ const getClientHost = require('../utils/getClientHost');
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Por favor, provea su nombre.'],
-  },
-  lastname: {
-    type: String,
-    required: [true, 'Por favor, provea su apellido.'],
-  },
-  bio: {
-    type: String,
-    maxlength: 3000,
-  },
-  identificationNumber: {
-    type: String,
-    select: false,
-    validate: [
-      {
-        validator: validator.isNumeric,
-        message: 'El número de identificación debe poseer solo caracteres numéricos.',
-      },
-      {
-        validator: function (el) {
-          return el.length == 11;
-        },
-        message: 'El número de identificación debe poseer 11 dígitos.',
-      },
-    ],
-  },
-  phone: {
-    type: String,
-    select: false,
-    validate: [
-      validator.isNumeric,
-      'El número telefónico debe poseer solo caracteres numéricos.',
-    ],
-  },
-  email: {
-    type: String,
-    required: [true, 'Por favor, provea su correo electrónico.'],
-    unique: true,
-    lowercase: true,
-    validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
-  },
-  birthday: {
-    type: Date,
-    max: function () {
-      let maxDate = new Date();
-      maxDate.setFullYear(maxDate.getFullYear() - 16);
-      return maxDate;
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Por favor, provea su nombre.'],
     },
-    required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
-  },
-  chats: {
-    type: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Chat',
+    lastname: {
+      type: String,
+      required: [true, 'Por favor, provea su apellido.'],
+    },
+    bio: {
+      type: String,
+      maxlength: 3000,
+    },
+    identificationNumber: {
+      type: String,
+      select: false,
+      validate: [
+        {
+          validator: validator.isNumeric,
+          message: 'El número de identificación debe poseer solo caracteres numéricos.',
+        },
+        {
+          validator: function (el) {
+            return el.length == 11;
+          },
+          message: 'El número de identificación debe poseer 11 dígitos.',
+        },
+      ],
+    },
+    phone: {
+      type: String,
+      select: false,
+      validate: [
+        validator.isNumeric,
+        'El número telefónico debe poseer solo caracteres numéricos.',
+      ],
+    },
+    email: {
+      type: String,
+      required: [true, 'Por favor, provea su correo electrónico.'],
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
+    },
+    birthday: {
+      type: Date,
+      max: function () {
+        let maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() - 16);
+        return maxDate;
       },
-    ],
-    select: false,
-  },
-  category: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Category',
-  },
-  location: {
-    type: locationSchema,
-    select: false,
-  },
-  password: {
-    type: String,
-    required: [true, 'Por favor, provea una contraseña.'],
-    minlength: [8, 'Las contraseñas deben poseer como mínimos 8 caracteres.'],
-    select: false,
-  },
-  passwordConfirm: {
-    type: String,
-    required: [true, 'Por favor, confirme su contraseña.'],
-    validate: {
-      //This only works on Create() and Save()
-      validator: function (el) {
-        return el === this.password;
+      required: [true, 'Por favor, ingrese su fecha de nacimiento.'],
+    },
+    chats: {
+      type: [
+        {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Chat',
+        },
+      ],
+      select: false,
+    },
+    category: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Category',
+    },
+    location: {
+      type: locationSchema,
+      select: false,
+    },
+    password: {
+      type: String,
+      required: [true, 'Por favor, provea una contraseña.'],
+      minlength: [8, 'Las contraseñas deben poseer como mínimos 8 caracteres.'],
+      select: false,
+    },
+    passwordConfirm: {
+      type: String,
+      required: [true, 'Por favor, confirme su contraseña.'],
+      validate: {
+        //This only works on Create() and Save()
+        validator: function (el) {
+          return el === this.password;
+        },
+        message: 'Las contraseñas no son iguales.',
       },
-      message: 'Las contraseñas no son iguales.',
+    },
+    passwordChangedAt: Date,
+    tokens: {
+      type: [
+        {
+          tokenType: {
+            type: String,
+            enum: ['email', 'password'],
+            required: true,
+          },
+          token: {
+            type: String,
+            required: true,
+          },
+          expireDate: {
+            type: Date,
+          },
+          _id: false,
+        },
+      ],
+      select: false,
+    },
+    isEmailValidated: {
+      type: Boolean,
+      default: false,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now(),
+      select: false,
+    },
+    userType: {
+      type: String,
+      enum: ['offerer', 'applicant', 'admin'],
+      required: [true, 'Se requiere el tipo de usuario.'],
+    },
+    organization: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Organization',
+    },
+    organizationRole: {
+      type: String,
+      enum: ['owner', 'supervisor', 'member'],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
+    profilePicture: {
+      type: String,
+      default:
+        'https://res.cloudinary.com/workn/image/upload/v1599076826/resources/blank-profile-picture_lvbhnr.png',
+    },
+    tags: {
+      type: [tagSchema],
+      //This is for preventing mongoose to create an empty array by default.
+      default: void 0,
+      validate: [
+        {
+          validator: function (el) {
+            return el.length < 11;
+          },
+          message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
+        },
+        {
+          validator: function (el) {
+            return el.length > 2;
+          },
+          message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
+        },
+      ],
     },
   },
-  passwordChangedAt: Date,
-  tokens: {
-    type: [
-      {
-        tokenType: {
-          type: String,
-          enum: ['email', 'password'],
-          required: true,
-        },
-        token: {
-          type: String,
-          required: true,
-        },
-        expireDate: {
-          type: Date,
-        },
-        _id: false,
-      },
-    ],
-    select: false,
-  },
-  isSignupCompleted: {
-    type: Boolean,
-    default: function () {
-      if (this.userType == 'applicant') return false;
-      else undefined;
-    },
-  },
-  isEmailValidated: {
-    type: Boolean,
-    default: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now(),
-    select: false,
-  },
-  userType: {
-    type: String,
-    enum: ['offerer', 'applicant', 'admin'],
-    required: [true, 'Se requiere el tipo de usuario.'],
-  },
-  organization: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Organization',
-  },
-  organizationRole: {
-    type: String,
-    enum: ['owner', 'supervisor', 'member'],
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-    select: false,
-  },
-  profilePicture: {
-    type: String,
-    default:
-      'https://res.cloudinary.com/workn/image/upload/v1599076826/resources/blank-profile-picture_lvbhnr.png',
-  },
-  tags: {
-    type: [tagSchema],
-    //This is for preventing mongoose to create an empty array by default.
-    default: void 0,
-    validate: [
-      {
-        validator: function (el) {
-          return el.length < 11;
-        },
-        message: 'La cantidad máxima de tags que se puede seleccionar es 10.',
-      },
-      {
-        validator: function (el) {
-          return el.length > 2;
-        },
-        message: 'La cantidad mínima de tags que se puede seleccionar es 3.',
-      },
-    ],
-  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+userSchema.virtual('isSignupCompleted').get(function () {
+  if (this.userType === 'offerer') return true;
+  else if (this.userType === 'applicant') {
+    return this.category != undefined && this.tags != undefined;
+  }
 });
 
 userSchema.pre('save', async function (next) {

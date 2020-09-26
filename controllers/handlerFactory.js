@@ -54,7 +54,7 @@ exports.getOne = (Model, popOptions) =>
     //If there is a popOption, we want to populate
     if (popOptions) query = query.populate(popOptions);
 
-    query = fieldsHandler(Model, query, req);
+    query = getOneFieldsHandler(Model, query, req);
     query = query.select('-__v');
     const doc = await query;
 
@@ -78,19 +78,22 @@ exports.getAll = (Model) =>
       .limitFields()
       .paginate();
 
+    features.query = getAllFieldsHandler(Model, features.query);
     //Execute query
-    const doc = await features.query;
+    let docs = await features.query;
+
+    docs = filterDocuments(Model, docs);
 
     res.status(200).json({
       status: 'success',
-      results: doc.length,
+      results: docs.length,
       data: {
-        data: doc,
+        data: docs,
       },
     });
   });
 
-const fieldsHandler = (Model, query, req) => {
+const getOneFieldsHandler = (Model, query, req) => {
   let fieldsToShow = '';
   switch (Model.modelName) {
     case 'User':
@@ -104,9 +107,56 @@ const fieldsHandler = (Model, query, req) => {
         query.populate({ path: 'members' });
       }
       break;
-
     default:
       break;
   }
   return query.select(fieldsToShow);
+};
+
+const getAllFieldsHandler = (Model, query) => {
+  switch (Model.modelName) {
+    case 'Offer':
+      const fieldsToShow = '_id name email profilePicture';
+      query.populate({
+        path: 'organization',
+        select: fieldsToShow + ' phone',
+      });
+
+      //TODO: do this populate conditionaly, if there is no org
+      query.populate({
+        path: 'createdBy',
+        select: fieldsToShow,
+      });
+
+      query.populate({
+        path: 'category',
+        select: '-__v',
+      });
+      break;
+    case 'User':
+      query.populate({
+        path: 'category',
+        select: '-__v',
+      });
+
+      query.select('-isEmailValidated');
+      break;
+
+    default:
+      break;
+  }
+  return query;
+};
+
+const filterDocuments = (Model, docs) => {
+  switch (Model.modelName) {
+    case 'User':
+      docs = docs.filter((doc) => doc.isSignupCompleted);
+      break;
+
+    default:
+      break;
+  }
+
+  return docs;
 };

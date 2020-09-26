@@ -33,7 +33,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
     interactionState = 'applied';
     interactionApplicant = user.id;
   } else if (userType == 'offerer') {
-    interactionState = 'interesed';
+    interactionState = 'interested';
     interactionOfferer = user.id;
     interactionApplicant = req.body.applicant;
   }
@@ -66,6 +66,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
   let interaction = await Interaction.findById(req.params.id).populate({
     path: 'offer',
     select: 'organization',
+    select: 'createdBy',
   });
   if (!interaction || interaction.state == 'deleted') {
     return next(
@@ -111,8 +112,14 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
       return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 400));
     }
   } else {
-    if (req.user.organization.equals(interaction.offer.organization)) {
+    if (req.user.organization) {
+      if (req.user.organization.equals(interaction.offer.organization)) {
+        interaction.state = 'match';
+        interaction.offerer = req.user.id;
+      }
+    } else if (interaction.offer.createdBy.equals(req.user.id)) {
       interaction.state = 'match';
+      interaction.offerer = req.user.id;
     }
   }
 
@@ -240,26 +247,42 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};
+  const fieldsToShow = '_id name email profilePicture';
 
   if (req.user.userType == 'applicant') {
-    interactions = await Interaction.find({ applicant: req.user.id }).populate({
-      path: 'offer',
-    });
+    interactions = await Interaction.find({ applicant: req.user.id })
+      .populate({
+        path: 'offer',
+        select: '-__v',
+        populate: [
+          { path: 'category', select: '-__v' },
+          { path: 'organization', select: fieldsToShow + ' phone' },
+          {
+            path: 'createdBy',
+            select: fieldsToShow,
+          },
+        ],
+      })
+      .select('-__v');
   } else if (req.user.userType == 'offerer') {
-    interactions = await Interaction.find({ offer: req.body.offer }).populate({
-      path: 'applicant',
-    });
+    interactions = await Interaction.find({ offer: req.query.offer })
+      .populate({
+        path: 'applicant',
+        populate: [{ path: 'category', select: '-__v' }],
+      })
+      .select('-__v');
   }
 
   parsedInteractions.applied = interactions.filter(
     (interaction) => interaction.state === 'applied'
   );
-  parsedInteractions.interesed = interactions.filter(
-    (interaction) => interaction.state === 'interesed'
+  parsedInteractions.interested = interactions.filter(
+    (interaction) => interaction.state === 'interested'
   );
   parsedInteractions.match = interactions.filter(
     (interaction) => interaction.state === 'match'
   );
+
   res.status(200).json({
     status: 'success',
     results: interactions.length,
@@ -271,7 +294,11 @@ exports.getMyInteractions = catchAsync(async (req, res, nect) => {
 
 exports.protectOfferInteraction = catchAsync(async (req, res, next) => {
   if (req.user.userType != 'offerer') return next();
-  offer = await Offer.findById(req.body.offer);
+
+  let offer = undefined;
+
+  if (req.body.offer) offer = await Offer.findById(req.body.offer);
+  else if (req.query.offer) offer = await Offer.findById(req.query.offer);
 
   if (!offer) {
     return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
