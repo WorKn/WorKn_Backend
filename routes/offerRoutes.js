@@ -7,7 +7,7 @@ const {
   protectOffer,
   deleteOffer,
   getMyOffers,
-  getOfferByTag,
+  GetOffersHandler,
 } = require('../controllers/offerController');
 const {
   restricTo,
@@ -18,7 +18,7 @@ const {
 const interactionRouter = require('./../routes/interactionRoutes');
 const router = express.Router();
 
-router.get('/', getOfferByTag);
+router.get('/', GetOffersHandler);
 router.get('/me',protect,verifyEmailValidation,restricTo('offerer'), getMyOffers);
 router.use('/interactions', interactionRouter);
 

@@ -189,8 +189,6 @@ const getOfferWithTags = async (req, res) => {
   tags.forEach(async (tagOffer) => {
     offers.add(tagOffer.offer);
   });
-
-  console.log(tags.length);
   res.status(200).json({
     status: 'success',
     results: offers.size,
@@ -200,10 +198,6 @@ const getOfferWithTags = async (req, res) => {
   });
 };
 
-exports.getOfferByTag  = catchAsync(async(req, res, next)=>{
-  if(req.query.tags){   
-    return getOfferWithTags(req,res);
-  }else{
-    return this.getAllOffers(req,res,next);
-  }
+exports.GetOffersHandler  = catchAsync(async(req, res, next)=>{
+  req.query.tags? getOfferWithTags(req,res) : this.getAllOffers(req,res,next);
 });
