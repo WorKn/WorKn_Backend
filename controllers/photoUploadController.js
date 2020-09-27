@@ -64,7 +64,7 @@ let streamUpload = (req, folderPath) => {
 
     let stream = cloudinary.uploader.upload_stream(config, (error, result) => {
       if (result) {
-        console.log('SUCCESS: Image uploaded successfully.');
+        console.log('SUCCESS: Image uploaded successfully to ' + folderPath);
         resolve(result);
       } else {
         console.log('ERROR:', 'On image upload.\n', error);
