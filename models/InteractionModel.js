@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const interactionSchema = new mongoose.Schema({
   state: {
     type: String,
-    enum: ['applied', 'interesed', 'match','deleted'],
+    enum: ['applied', 'interested', 'match', 'deleted'],
     required: [true, 'Una interación debe poseer un estado.'],
   },
   rejected: {

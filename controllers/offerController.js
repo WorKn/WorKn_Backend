@@ -149,19 +149,14 @@ exports.getOffer = factory.getOne(Offer);
 exports.getMyOffers = catchAsync(async (req, res, next) => {
   let offers = [];
   if (req.user.organization) {
-    offers = await Offer.find({ organization: { $in: req.user.organization } }).select(
-      '+updatedAt'
-    );
+    offers = await Offer.find({ organization: req.user.organization }).select('+updatedAt');
   } else {
-    offers = await Offer.find({ createdBy: { $in: req.user.id } }).select('+updatedAt');
+    offers = await Offer.find({ createdBy: req.user.id }).select('+updatedAt');
   }
-  if (offers.length == 0) {
-    return next(
-      new AppError('Usted no posee ninguna oferta asociada, le invitamos a crear una.', 400)
-    );
-  }
-  res.status(201).json({
+
+  res.status(200).json({
     status: 'success',
+    results: offers.length,
     data: {
       offers,
     },

@@ -80,13 +80,15 @@ exports.getAll = (Model) =>
 
     features.query = getAllFieldsHandler(Model, features.query);
     //Execute query
-    const doc = await features.query;
+    let docs = await features.query;
+
+    docs = filterDocuments(Model, docs);
 
     res.status(200).json({
       status: 'success',
-      results: doc.length,
+      results: docs.length,
       data: {
-        data: doc,
+        data: docs,
       },
     });
   });
@@ -114,10 +116,10 @@ const getOneFieldsHandler = (Model, query, req) => {
 const getAllFieldsHandler = (Model, query) => {
   switch (Model.modelName) {
     case 'Offer':
-      const fieldsToShow = '_id name phone email profilePicture';
+      const fieldsToShow = '_id name email profilePicture';
       query.populate({
         path: 'organization',
-        select: fieldsToShow,
+        select: fieldsToShow + ' phone',
       });
 
       //TODO: do this populate conditionaly, if there is no org
@@ -137,11 +139,24 @@ const getAllFieldsHandler = (Model, query) => {
         select: '-__v',
       });
 
-      query.select('-isSignupCompleted -isEmailValidated');
+      query.select('-isEmailValidated');
       break;
 
     default:
       break;
   }
   return query;
+};
+
+const filterDocuments = (Model, docs) => {
+  switch (Model.modelName) {
+    case 'User':
+      docs = docs.filter((doc) => doc.isSignupCompleted);
+      break;
+
+    default:
+      break;
+  }
+
+  return docs;
 };
