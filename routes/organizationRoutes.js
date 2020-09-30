@@ -3,7 +3,7 @@ const {
   createOrganization,
   getAllOrganizations,
   getOrganization,
-  editOrganization,
+  editMyOrganization,
   getMyOrganization,
   sendInvitationEmail,
   addOrganizationMember,
@@ -13,31 +13,54 @@ const {
   protectOrganization,
   getInvitationInfo,
   signupOrganizationMember,
-  deleteInvitation
+  deleteInvitation,
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
+
+const {
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary,
+} = require('./../controllers/photoUploadController');
 
 const router = express.Router();
 
 router.get('/', getAllOrganizations);
-router.get('/myOrganization', protect, getMyOrganization, getOrganization);
+router.get('/me', protect, getMyOrganization, getOrganization);
 router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
-router.post('/members/signup/:token', validateMemberInvitation,signupOrganizationMember,deleteInvitation, addOrganizationMember);
+router.post(
+  '/members/signup/:token',
+  validateMemberInvitation,
+  signupOrganizationMember,
+  deleteInvitation,
+  addOrganizationMember
+);
 
 router.get('/:id', getOrganization);
 
 //Protected routes
 router.use(protect);
 
-router.post('/',restricTo('owner'), protectOrganization, createOrganization);
-router.patch('/',restricTo('owner'), protectOrganization, editOrganization);
+router.post('/', restricTo('owner'), createOrganization);
+router.patch(
+  '/me',
+  restricTo('owner'),
+  protectOrganization,
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary('Organization'),
+  editMyOrganization
+);
 
 router
   .route('/members')
   .get(restricTo('owner', 'supervisor', 'member'), protectOrganization, getOrganization)
-  .post(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole)
+  .patch(restricTo('supervisor', 'owner'), protectOrganization, updateMemberRole);
 
-router.delete('/members/:id', restricTo('supervisor','owner'), protectOrganization,removeOrganizationMember)
+router.delete(
+  '/members/:id',
+  restricTo('supervisor', 'owner'),
+  protectOrganization,
+  removeOrganizationMember
+);
 
 router
   .route('/members/invite')
