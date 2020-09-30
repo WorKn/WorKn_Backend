@@ -17,6 +17,11 @@ const {
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
 
+const {
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary,
+} = require('./../controllers/photoUploadController');
+
 const router = express.Router();
 
 router.get('/', getAllOrganizations);
@@ -36,7 +41,14 @@ router.get('/:id', getOrganization);
 router.use(protect);
 
 router.post('/', restricTo('owner'), createOrganization);
-router.patch('/me', restricTo('owner'), protectOrganization, editMyOrganization);
+router.patch(
+  '/me',
+  restricTo('owner'),
+  protectOrganization,
+  uploadPhotoToServer,
+  uploadPhotoToCloudinary('Organization'),
+  editMyOrganization
+);
 
 router
   .route('/members')

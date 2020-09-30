@@ -14,9 +14,13 @@ const {
   getUser,
   updateMyProfile,
   getMe,
+} = require('./../controllers/userController');
+
+const {
   uploadPhotoToServer,
   uploadPhotoToCloudinary,
-} = require('./../controllers/userController');
+} = require('./../controllers/photoUploadController');
+
 const router = express.Router();
 
 //Routes
@@ -40,7 +44,7 @@ router.patch('/updateMyPassword', updateMyPassword);
 router.patch(
   '/updateMyProfile',
   uploadPhotoToServer,
-  uploadPhotoToCloudinary,
+  uploadPhotoToCloudinary('User'),
   updateMyProfile
 );
 

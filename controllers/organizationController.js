@@ -72,7 +72,7 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
     );
   }
 
-  allowedFields = ['name', 'location', 'bio', 'phone', 'email'];
+  allowedFields = ['name', 'location', 'bio', 'phone', 'email', 'profilePicture'];
   if (req.organization.RNC) {
     allowedFields.push('RNC');
   }
