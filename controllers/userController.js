@@ -10,7 +10,35 @@ const TagUser = require('./../models/tagUserModel');
 
 exports.getAllUsers = factory.getAll(User);
 
+const getUsersWithTags = async (req,res) =>{
+  tags = await TagUser.find({ tag: { $in: req.query.tags } })
+    .populate({
+      path: 'user',
+      select: '-__v -isEmailValidated',
+      populate: [
+        { path: 'tags', select: '-__v' },
+      ],
+    })
+  .select('-__v')
+
+  const users = new Set();
+  tags.forEach(async (tagUser) => {
+    users.add(tagUser.user);
+  });
+  res.status(200).json({
+    status: 'success',
+    results: users.size,
+    data: {
+      users: Array.from(users),
+    },
+  });
+};
+
 exports.getUser = factory.getOne(User);
+
+exports.getUsersHandler = catchAsync(async(req,res,next)=>{
+  req.query.tags? getUsersWithTags(req,res) : this.getAllUsers(req,res,next);
+});
 
 exports.getMe = catchAsync(async (req, res, next) => {
   req.params.id = req.user.id;
@@ -28,7 +56,6 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     'profilePicture',
   ];
   const tagsRef = req.body.tags;
-
   if (req.body.password || req.body.passwordConfirm) {
     return next(new AppError('No puede cambiar su contraseña por esta vía.', 400));
   }

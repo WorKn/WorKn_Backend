@@ -10,7 +10,7 @@ const {
   validateEmail,
 } = require('./../controllers/authController');
 const {
-  getAllUsers,
+  getUsersHandler,
   getUser,
   updateMyProfile,
   getMe,
@@ -33,7 +33,7 @@ router.patch('/resetPassword/:token', resetPassword);
 
 router.patch('/validateEmail/:token', validateEmail);
 
-router.get('/', getAllUsers);
+router.get('/', getUsersHandler);
 router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
 
