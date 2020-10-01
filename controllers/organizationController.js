@@ -126,11 +126,11 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   }
 
   req.organization.save({ validateBeforeSave: false });
-
   res.status(201).json({
     status: 'success',
+    token: res.token,
     data: {
-      user: req.user,
+      user: req.user,   
     },
   });
 });
@@ -365,7 +365,6 @@ const signToken = (id) => {
 
 const createSendToken = (user, res) => {
   const token = signToken(user._id);
-
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 // Converting from days to miliseconds)
@@ -378,5 +377,6 @@ const createSendToken = (user, res) => {
   }
 
   res.cookie('jwt', token, cookieOptions);
+  res.token = token;
   user.password = undefined;
 };
