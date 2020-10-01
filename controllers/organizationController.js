@@ -306,10 +306,6 @@ exports.getInvitationInfo = catchAsync(async (req, res, next) => {
     status: 'success',
     message: 'Access authorized',
     data: {
-<<<<<<< HEAD
-      message: 'access authorized',
-=======
->>>>>>> develop
       organization: req.organization,
       email: req.invitedEmail,
       invitedRole: req.invitedRole,
