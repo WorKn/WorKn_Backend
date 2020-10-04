@@ -119,7 +119,7 @@ exports.createChat = catchAsync(async (req, res, next) => {
   }
 
   const io = req.app.get('socketio');
-  io.emit('chat_message', message.message);
+  io.emit('chat_message', chat.id, message.message);
 
   res.status(201).json({
     status: 'success',
@@ -145,7 +145,7 @@ exports.createMessage = catchAsync(async (req, res, next) => {
   chat = await chat.save();
 
   const io = req.app.get('socketio');
-  io.emit('chat_message', message.message);
+  io.emit('chat_message', chat.id, message.message);
 
   res.status(201).json({
     status: 'success',
@@ -214,11 +214,12 @@ exports.getChatMessages = catchAsync(async (req, res, next) => {
     })
     .execPopulate();
 
-  chat.isLive = undefined;
-  chat.lastMessage = undefined;
-
   chat = JSON.parse(JSON.stringify(chat));
   chat = renameChatUser(chat, userToPopulate);
+
+  chat.isLive = undefined;
+  chat.lastMessage = undefined;
+  chat.id = undefined;
 
   res.status(200).json({
     status: 'success',

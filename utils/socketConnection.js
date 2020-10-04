@@ -8,7 +8,7 @@
 const socketConnection = (io) => {
   //   const io = require('socket.io')(server);
 
-  io.sockets.on('connection', function (socket) {
+  io.sockets.on('connection', (socket) => {
     //   socket.on('username', function (username) {
     //     socket.username = username;
     //     io.emit('is_online', '🔵 <i>' + socket.username + ' join the chat..</i>');
@@ -18,18 +18,18 @@ const socketConnection = (io) => {
     //   io.emit('is_online', '🔴 <i>' + socket.username + ' left the chat..</i>');
     // });
 
-    socket.on('username', function (username) {
+    socket.on('username', (room, username) => {
       console.log('Username event...');
       socket.username = username;
-      io.emit('is_online', socket.username + ' joined the chat...');
+      socket.to(room).emit('is_online', socket.username + ' joined the chat...');
     });
 
-    socket.on('chat_message', function (message) {
-      io.emit('chat_message', socket.username + ': ' + message);
+    socket.on('chat_message', (room, message) => {
+      socket.to(room).emit('chat_message', socket.username + ': ' + message);
     });
 
-    socket.on('disconnect', function (username) {
-      io.emit('is_online', socket.username + ' left the chat...');
+    socket.on('disconnect', (room, username) => {
+      socket.to(room).emit('is_online', socket.username + ' left the chat...');
     });
   });
 
