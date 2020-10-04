@@ -34,7 +34,7 @@ router.patch('/resetPassword/:token', resetPassword);
 
 router.patch('/validateEmail/:token', validateEmail);
 
-router.get("/recommendations",protect,getUserRecommendation)
+router.get('/me/recommendations', protect, getUserRecommendation);
 router.get('/', getUsersHandler);
 router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
