@@ -95,26 +95,29 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUserRecommendation = catchAsync(async(req,res,next)=>{
+exports.getUserRecommendation = catchAsync(async (req, res, next) => {
   tags = await TagOffer.find({ tag: { $in: req.user.tags } }).distinct('offer');
   recommended = new Set();
-  while(recommended.size!=20 && tags.length>0){
-    position = Math.floor(Math.random() * tags.length) + 0
+  while (recommended.size != 20 && tags.length > 0) {
+    position = Math.floor(Math.random() * tags.length) + 0;
     recommended.add(tags[position]);
     tags.splice(position, 1);
   }
   offers = [];
   for (let offer of recommended) {
-    offers.push(await Offer.find({_id: offer})
-    .populate({
-      path: 'category', select: '-__v' ,
-    })
-    .select('-__v'))
+    offers.push(
+      await Offer.find({ _id: offer })
+        .populate({
+          path: 'category',
+          select: '-__v',
+        })
+        .select('-__v')
+    );
   }
   res.status(200).json({
     status: 'success',
     data: {
-      offers
+      offers,
     },
   });
 });
