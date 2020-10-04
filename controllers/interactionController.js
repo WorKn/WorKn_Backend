@@ -6,7 +6,7 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 
 exports.validateCreateInteraction = catchAsync(async (req, res, next) => {
-  if (req.body.offer) {
+  if (!req.body.offer) {
     return next(new AppError('Por favor, provea una oferta.', 400));
   }
 

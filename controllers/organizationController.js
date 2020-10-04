@@ -228,7 +228,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       )
     );
   }
-  if (req.body.invitation.organizationRole == 'owner') {
+  if (req.body.invitation.role == 'owner') {
     return next(
       new AppError(
         'Se ha detectado el rol owner en la invitation, el proceso será interrumpido.' +
