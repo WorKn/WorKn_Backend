@@ -7,6 +7,9 @@ const updateTags = require('./../utils/updateTags');
 const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
+const TagOffer = require('./../models/tagOfferModel');
+const Offer = require('../models/offerModel');
+
 
 exports.getAllUsers = factory.getAll(User);
 
@@ -22,6 +25,7 @@ const getUsersWithTags = async (req,res) =>{
   .select('-__v')
 
   const users = new Set();
+
   tags.forEach(async (tagUser) => {
     users.add(tagUser.user);
   });
@@ -87,6 +91,30 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       user: updatedUser,
+    },
+  });
+});
+
+exports.getUserRecommendation = catchAsync(async(req,res,next)=>{
+  tags = await TagOffer.find({ tag: { $in: req.user.tags } }).distinct('offer');
+  recommended = new Set();
+  while(recommended.size!=20 && tags.length>0){
+    position = Math.floor(Math.random() * tags.length) + 0
+    recommended.add(tags[position]);
+    tags.splice(position, 1);
+  }
+  offers = [];
+  for (let offer of recommended) {
+    offers.push(await Offer.find({_id: offer})
+    .populate({
+      path: 'category', select: '-__v' ,
+    })
+    .select('-__v'))
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      offers
     },
   });
 });

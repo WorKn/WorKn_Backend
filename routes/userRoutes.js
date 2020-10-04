@@ -14,6 +14,7 @@ const {
   getUser,
   updateMyProfile,
   getMe,
+  getUserRecommendation,
 } = require('./../controllers/userController');
 
 const {
@@ -33,6 +34,7 @@ router.patch('/resetPassword/:token', resetPassword);
 
 router.patch('/validateEmail/:token', validateEmail);
 
+router.get("/recommendations",protect,getUserRecommendation)
 router.get('/', getUsersHandler);
 router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
