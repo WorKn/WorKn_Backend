@@ -386,45 +386,22 @@ exports.getOrganizationRecommendation = catchAsync(async (req, res, next) => {
   offers = await Offer.find({organization: req.user.organization, state:{$ne: 'deleted'}})
   for (let offer of offers){
     tags = [];
-    start = new Date()
     offer.tags.forEach(tag=>{
       tags.push(tag.id);
     })
 
-    finish = new Date();
-    time = finish - start;
-    time /= 1000;
-    console.log("for 1: " +time)
-
-    tagsUser = await tagUser.find({ tag: { $in: tags }}) .distinct('user');
+    tagsUser = await tagUser.find({ tag: { $in: tags }}).populate('user'); 
     usersTags = Array.from(tagsUser);
     recommended = new Set();
-
-    start = new Date()
+    
     while (recommended.size != 20 && usersTags.length > 0) {
       position = Math.floor(Math.random() * usersTags.length) + 0;
-      recommended.add(usersTags[position]);
+      recommended.add(usersTags[position].user);
       usersTags.splice(position, 1);
     }
 
-    finish = new Date();
-    time = finish - start;
-    time /= 1000;
-    console.log("for 2: " +time)
-
-    users = [];
-    start = new Date()
-    for (let user of recommended) {
-      users.push(
-        await User.findById(user)
-      );
-    }
-    finish = new Date();
-    time = finish - start;
-    time /= 1000;
-    console.log("for 3: " +time)
     const obj = JSON.parse(JSON.stringify(offer))
-    obj.recommended = users;
+    obj.recommended = Array.from(recommended);
     offersRecommended.push(obj)
   }
   res.status(200).json({
