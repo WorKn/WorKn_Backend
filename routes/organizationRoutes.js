@@ -13,6 +13,7 @@ const {
   protectOrganization,
   getInvitationInfo,
   signupOrganizationMember,
+  getOrganizationRecommendation,
   deleteInvitation,
 } = require('./../controllers/organizationController');
 const { restricTo, protect } = require('./../controllers/authController');
@@ -26,6 +27,7 @@ const router = express.Router();
 
 router.get('/', getAllOrganizations);
 router.get('/me', protect, getMyOrganization, getOrganization);
+router.get('/me/recommendations', protect,getOrganizationRecommendation);
 router.route('/invitation/:token').get(validateMemberInvitation, getInvitationInfo);
 router.post(
   '/members/signup/:token',

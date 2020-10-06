@@ -9,6 +9,8 @@ const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
 const jwt = require('jsonwebtoken');
+const tagUser = require('../models/tagUserModel');
+const Offer = require('../models/offerModel');
 
 exports.protectOrganization = catchAsync(async (req, res, next) => {
   if (req.user.userType == 'applicant') {
@@ -376,3 +378,59 @@ const createSendToken = (user, res) => {
   res.token = token;
   user.password = undefined;
 };
+
+// Recomendation ----------------------
+exports.getOrganizationRecommendation = catchAsync(async (req, res, next) => {
+  
+  offersRecommended = [];
+  offers = await Offer.find({organization: req.user.organization, state:{$ne: 'deleted'}})
+  for (let offer of offers){
+    tags = [];
+    start = new Date()
+    offer.tags.forEach(tag=>{
+      tags.push(tag.id);
+    })
+
+    finish = new Date();
+    time = finish - start;
+    time /= 1000;
+    console.log("for 1: " +time)
+
+    tagsUser = await tagUser.find({ tag: { $in: tags }}) .distinct('user');
+    usersTags = Array.from(tagsUser);
+    recommended = new Set();
+
+    start = new Date()
+    while (recommended.size != 20 && usersTags.length > 0) {
+      position = Math.floor(Math.random() * usersTags.length) + 0;
+      recommended.add(usersTags[position]);
+      usersTags.splice(position, 1);
+    }
+
+    finish = new Date();
+    time = finish - start;
+    time /= 1000;
+    console.log("for 2: " +time)
+
+    users = [];
+    start = new Date()
+    for (let user of recommended) {
+      users.push(
+        await User.findById(user)
+      );
+    }
+    finish = new Date();
+    time = finish - start;
+    time /= 1000;
+    console.log("for 3: " +time)
+    const obj = JSON.parse(JSON.stringify(offer))
+    obj.recommended = users;
+    offersRecommended.push(obj)
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      offers: offersRecommended,
+    },
+  });
+});

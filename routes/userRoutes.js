@@ -6,6 +6,7 @@ const {
   resetPassword,
   protect,
   updateMyPassword,
+  restricTo,
   logout,
   validateEmail,
 } = require('./../controllers/authController');
@@ -34,7 +35,7 @@ router.patch('/resetPassword/:token', resetPassword);
 
 router.patch('/validateEmail/:token', validateEmail);
 
-router.get('/me/recommendations', protect, getUserRecommendation);
+router.get('/me/recommendations', protect,restricTo('applicant'), getUserRecommendation);
 router.get('/', getUsersHandler);
 router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
