@@ -390,7 +390,7 @@ exports.getOrganizationRecommendation = catchAsync(async (req, res, next) => {
     offer.tags.forEach(tag=>{
       tags.push(tag.id);
     })
-
+    
     tagsUser = await tagUser.find({ tag: { $in: tags }}).populate('user'); 
     usersTags = Array.from(tagsUser);
     recommended = new Set();

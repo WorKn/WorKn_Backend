@@ -96,33 +96,33 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
 });
 
 exports.getUserRecommendation = catchAsync(async (req, res, next) => {
-  if(user.userType == "applicant"){
-    tags = await TagOffer.find({ tag: { $in: req.user.tags } }).distinct('offer');
-    recommended = new Set();
-    while (recommended.size != 20 && tags.length > 0) {
-      position = Math.floor(Math.random() * tags.length) + 0;
-      recommended.add(tags[position]);
-      tags.splice(position, 1);
-    }
-    offers = [];
-    for (let offer of recommended) {
-      offers.push(
-        await Offer.find({ _id: offer })
-          .populate({
-            path: 'category',
-            select: '-__v',
-          })
-          .select('-__v')
-      );
-    }
-  }else{
-    
+  const fieldsToShow = '_id name email profilePicture';
+  tags = await TagOffer.find({ tag: { $in: req.user.tags } }).populate({
+    path: 'offer',
+    select: '-__v',
+    populate: [
+      { path: 'category', select: '-__v' },
+      { path: 'organization', select: fieldsToShow + ' phone' },
+      {
+        path: 'createdBy',
+        select: fieldsToShow,
+      },
+    ],
+  })
+  .select('-__v');
+  recommended = new Set();
+  while (recommended.size != 20 && tags.length > 0) {
+    position = Math.floor(Math.random() * tags.length) + 0;
+    console.log(tags[position].offer)
+    recommended.add(tags[position].offer);
+    tags.splice(position, 1);
   }
-  
+  recommended = Array.from(recommended);
   res.status(200).json({
     status: 'success',
+    results: recommended.length,
     data: {
-      offers,
+      recommended,
     },
   });
 });
