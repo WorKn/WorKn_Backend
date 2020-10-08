@@ -383,6 +383,7 @@ const createSendToken = (user, res) => {
 exports.getOrganizationRecommendation = catchAsync(async (req, res, next) => {
   
   offersRecommended = [];
+  recommendedCount = 0;
   offers = await Offer.find({organization: req.user.organization, state:{$ne: 'deleted'}})
   for (let offer of offers){
     tags = [];
@@ -396,16 +397,18 @@ exports.getOrganizationRecommendation = catchAsync(async (req, res, next) => {
     
     while (recommended.size != 20 && usersTags.length > 0) {
       position = Math.floor(Math.random() * usersTags.length) + 0;
-      recommended.add(usersTags[position].user);
+      recommended.add(usersTags[position].user);      
       usersTags.splice(position, 1);
     }
-
+    
+    recommendedCount+=recommended.size
     const obj = JSON.parse(JSON.stringify(offer))
     obj.recommended = Array.from(recommended);
     offersRecommended.push(obj)
   }
   res.status(200).json({
     status: 'success',
+    results: recommendedCount,
     data: {
       offers: offersRecommended,
     },
