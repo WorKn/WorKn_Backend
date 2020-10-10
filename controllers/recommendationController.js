@@ -18,6 +18,7 @@ exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
     .populate({
       path: 'offer',
       select: '-__v',
+      match: {state: { $nin: ['deleted', 'paused']}},
       populate: [
         { path: 'category', select: '-__v' },
         { path: 'organization', select: fieldsToShow + ' phone' },
@@ -57,7 +58,7 @@ exports.getUserRecommendation = catchAsync(async (req, res, next) => {
   recommendedCount = 0;
   offers = await Offer.find({
     organization: req.user.organization,
-    state: { $ne: 'deleted' },
+    state: { $nin: ['deleted', 'paused']},
   });
   for (let offer of offers) {
     tags = [];
