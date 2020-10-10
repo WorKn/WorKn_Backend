@@ -7,8 +7,6 @@ const updateTags = require('./../utils/updateTags');
 const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
-const TagOffer = require('./../models/tagOfferModel');
-const Offer = require('../models/offerModel');
 
 
 exports.getAllUsers = factory.getAll(User);
@@ -91,38 +89,6 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       user: updatedUser,
-    },
-  });
-});
-
-exports.getUserRecommendation = catchAsync(async (req, res, next) => {
-  const fieldsToShow = '_id name email profilePicture';
-  tags = await TagOffer.find({ tag: { $in: req.user.tags } }).populate({
-    path: 'offer',
-    select: '-__v',
-    populate: [
-      { path: 'category', select: '-__v' },
-      { path: 'organization', select: fieldsToShow + ' phone' },
-      {
-        path: 'createdBy',
-        select: fieldsToShow,
-      },
-    ],
-  })
-  .select('-__v');
-  recommended = new Set();
-  while (recommended.size != 20 && tags.length > 0) {
-    position = Math.floor(Math.random() * tags.length) + 0;
-    console.log(tags[position].offer)
-    recommended.add(tags[position].offer);
-    tags.splice(position, 1);
-  }
-  recommended = Array.from(recommended);
-  res.status(200).json({
-    status: 'success',
-    results: recommended.length,
-    data: {
-      recommended,
     },
   });
 });
