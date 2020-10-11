@@ -5,6 +5,7 @@ const Offer = require('../models/offerModel');
 const AppError = require('./../utils/appError');
 
 exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
+
   if (req.user.userType != 'applicant') {
     return next(
       new AppError(
@@ -54,12 +55,20 @@ exports.getUserRecommendation = catchAsync(async (req, res, next) => {
       )
     );
   }
+  if(req.user.organization){
+    offers = await Offer.find({
+      organization: req.user.organization,
+      state: { $nin: ['deleted', 'paused']},
+    });
+  }else{
+    offers = await Offer.find({
+      createdBy: req.user.id,
+      state: { $nin: ['deleted', 'paused']},
+    });
+  }
   offersRecommended = [];
   recommendedCount = 0;
-  offers = await Offer.find({
-    organization: req.user.organization,
-    state: { $nin: ['deleted', 'paused']},
-  });
+  
   for (let offer of offers) {
     tags = [];
     offer.tags.forEach((tag) => {
