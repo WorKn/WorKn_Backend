@@ -8,6 +8,7 @@ const {
   updateMyPassword,
   logout,
   validateEmail,
+  googleAuth
 } = require('./../controllers/authController');
 const {
   getUsersHandler,
@@ -26,6 +27,7 @@ const router = express.Router();
 //Routes
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/login/google', googleAuth);
 router.get('/logout', logout);
 
 router.post('/forgotPassword', forgotPassword);

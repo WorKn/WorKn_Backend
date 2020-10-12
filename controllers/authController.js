@@ -7,6 +7,7 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const sendEmail = require('./../utils/email');
 const getClientHost = require('./../utils/getClientHost');
+const { getGoogleAuthAccessToken, getGoogleUserInfo } = require('../utils/googleApi');
 
 const { promisify } = require('util');
 
@@ -81,6 +82,22 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   createSendToken(user, 200, res);
+});
+
+exports.googleAuth = catchAsync(async (req, res, next) => {
+  const response = await getGoogleAuthAccessToken(req.body.code, req.body.redirectUri);
+  const accessToken = response.data.access_token;
+
+  if (response.status != 200) {
+    return next(new AppError('Error al realizar autenticación con Google.', 500));
+  }
+
+  const response2 = await getGoogleUserInfo(accessToken);
+
+  res.status(200).json({
+    status: 'success',
+    accessToken,
+  });
 });
 
 exports.logout = (req, res) => {
