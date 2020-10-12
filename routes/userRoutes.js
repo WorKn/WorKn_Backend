@@ -6,6 +6,7 @@ const {
   resetPassword,
   protect,
   updateMyPassword,
+  restricTo,
   logout,
   validateEmail,
 } = require('./../controllers/authController');
