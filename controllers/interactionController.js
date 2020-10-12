@@ -47,7 +47,6 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   const interaction = await Interaction.findOne({
     offer: req.body.offer,
     applicant: interactionApplicant,
-    offerer: { $in: [interactionOfferer, undefined] },
   });
 
   if (interaction) {
@@ -55,14 +54,14 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
       new AppError('Usted ya tiene una interacción con esta oferta, por favor, verifique', 400)
     );
   }
-
+  
   const newInteraction = await Interaction.create({
     state: interactionState,
     offer: req.body.offer,
     applicant: interactionApplicant,
     offerer: interactionOfferer,
   });
-
+  
   res.status(201).json({
     status: 'success',
     data: {
@@ -137,7 +136,6 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
       interaction.state = 'match';
       interaction.offerer = req.user.id;
     } else {
-      console.log(req.user.organization+"///"+req.interaction)
       return next(new AppError('Esta oferta no está dirigida hacia usted o su organización, lo sentimos.', 403));
     }
   }
