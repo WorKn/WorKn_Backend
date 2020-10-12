@@ -136,7 +136,7 @@ exports.acceptInteraction = catchAsync(async (req, res, next) => {
       interaction.state = 'match';
       interaction.offerer = req.user.id;
     } else {
-      return next(new AppError('Esta oferta no está dirigida hacia usted o su organización, lo sentimos.', 403));
+      return next(new AppError('Esta oferta no está dirigida hacia usted, lo sentimos.', 403));
     }
   }
 
