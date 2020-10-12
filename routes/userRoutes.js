@@ -6,18 +6,22 @@ const {
   resetPassword,
   protect,
   updateMyPassword,
+  restricTo,
   logout,
   validateEmail,
 } = require('./../controllers/authController');
 const {
-  getAllUsers,
+  getUsersHandler,
   getUser,
   updateMyProfile,
   getMe,
+} = require('./../controllers/userController');
+
+const {
   uploadPhotoToServer,
   uploadPhotoToCloudinary,
-} = require('./../controllers/userController');
-const chatRouter = require('./chatRoutes');
+} = require('./../controllers/photoUploadController');
+
 const router = express.Router();
 
 //Routes
@@ -33,7 +37,7 @@ router.patch('/resetPassword/:token', resetPassword);
 
 router.patch('/validateEmail/:token', validateEmail);
 
-router.get('/', getAllUsers);
+router.get('/', getUsersHandler);
 router.get('/me', protect, getMe, getUser);
 router.get('/:id', getUser);
 
@@ -44,7 +48,7 @@ router.patch('/updateMyPassword', updateMyPassword);
 router.patch(
   '/updateMyProfile',
   uploadPhotoToServer,
-  uploadPhotoToCloudinary,
+  uploadPhotoToCloudinary('User'),
   updateMyProfile
 );
 

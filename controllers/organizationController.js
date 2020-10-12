@@ -72,7 +72,7 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
     );
   }
 
-  allowedFields = ['name', 'location', 'bio', 'phone', 'email'];
+  allowedFields = ['name', 'location', 'bio', 'phone', 'email', 'profilePicture'];
   if (req.organization.RNC) {
     allowedFields.push('RNC');
   }
@@ -126,11 +126,11 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
   }
 
   req.organization.save({ validateBeforeSave: false });
-
   res.status(201).json({
     status: 'success',
+    token: res.token,
     data: {
-      user: req.user,
+      user: req.user,   
     },
   });
 });
@@ -228,7 +228,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       )
     );
   }
-  if (req.body.invitation.organizationRole == 'owner') {
+  if (req.body.invitation.role == 'owner') {
     return next(
       new AppError(
         'Se ha detectado el rol owner en la invitation, el proceso será interrumpido.' +
@@ -361,7 +361,6 @@ const signToken = (id) => {
 
 const createSendToken = (user, res) => {
   const token = signToken(user._id);
-
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 // Converting from days to miliseconds)
@@ -374,5 +373,6 @@ const createSendToken = (user, res) => {
   }
 
   res.cookie('jwt', token, cookieOptions);
+  res.token = token;
   user.password = undefined;
 };

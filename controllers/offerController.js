@@ -162,3 +162,37 @@ exports.getMyOffers = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const getOfferWithTags = async (req, res) => {
+  const fieldsToShow = '_id name email profilePicture';
+  tags = await TagOffer.find({ tag: { $in: req.query.tags } })
+    .populate({
+      path: 'offer',
+      select: '-__v',
+      populate: [
+        { path: 'category', select: '-__v' },
+        { path: 'organization', select: fieldsToShow + ' phone' },
+        {
+          path: 'createdBy',
+          select: fieldsToShow,
+        },
+      ],
+    })
+  .select('-__v')
+
+  const offers = new Set();
+  tags.forEach(async (tagOffer) => {
+    offers.add(tagOffer.offer);
+  });
+  res.status(200).json({
+    status: 'success',
+    results: offers.size,
+    data: {
+      offers: Array.from(offers),
+    },
+  });
+};
+
+exports.GetOffersHandler  = catchAsync(async(req, res, next)=>{
+  req.query.tags? getOfferWithTags(req,res) : this.getAllOffers(req,res,next);
+});
