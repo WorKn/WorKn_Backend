@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-
 const { OAuth2Client } = require('google-auth-library');
-// const client = new OAuth2Client(process.env.GOOGLE_AUTH_CLIENT_ID);
 
 const User = require('./../models/userModel');
 
@@ -10,11 +8,6 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const sendEmail = require('./../utils/email');
 const getClientHost = require('./../utils/getClientHost');
-const {
-  getGoogleAuthAccessToken,
-  getGoogleUserInfo,
-  getTokenInfo,
-} = require('../utils/googleApi');
 
 const { promisify } = require('util');
 
@@ -100,12 +93,6 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
   const { tokens } = await oAuth2Client.getToken(req.body.code);
 
-  //
-  // const response = await getGoogleAuthAccessToken(req.body.code, req.body.redirectUri);
-  // const accessToken = response.data.access_token;
-  // const idToken = response.data.id_token;
-  //
-
   const decodedIdToken = await oAuth2Client.verifyIdToken({
     idToken: tokens.id_token,
     audience: process.env.GOOGLE_AUTH_CLIENT_ID,
@@ -114,17 +101,8 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   const payload = decodedIdToken.getPayload();
   const userid = payload['sub'];
 
-  // const idTokenDecoded = await getTokenInfo(idToken);
-
-  // if (response.status != 200) {
-  //   return next(new AppError('Error al realizar autenticación con Google.', 500));
-  // }
-
-  // const response2 = await getGoogleUserInfo(accessToken);
-
   res.status(200).json({
     status: 'success',
-    accessToken,
   });
 });
 
