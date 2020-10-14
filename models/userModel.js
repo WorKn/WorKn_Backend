@@ -135,6 +135,11 @@ const userSchema = new mongoose.Schema(
       enum: ['offerer', 'applicant', 'admin'],
       required: [true, 'Se requiere el tipo de usuario.'],
     },
+    signUpMethod: {
+      type: String,
+      enum: ['workn', 'google'],
+      default: 'workn',
+    },
     organization: {
       type: mongoose.Schema.ObjectId,
       ref: 'Organization',

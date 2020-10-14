@@ -91,15 +91,30 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
     req.body.redirectUri
   );
 
+  //Get user's Google tokens
   const { tokens } = await oAuth2Client.getToken(req.body.code);
 
+  //Decode user's Google id_token
   const decodedIdToken = await oAuth2Client.verifyIdToken({
     idToken: tokens.id_token,
     audience: process.env.GOOGLE_AUTH_CLIENT_ID,
   });
 
   const payload = decodedIdToken.getPayload();
-  const userid = payload['sub'];
+
+  const user = await User.findOne({ email: payload.email });
+
+  if (!user) {
+    //googleSignup
+  } else {
+    if (user.signUpMethod != 'google') {
+      return next(
+        new AppError('Usuario ya registrado utilizando otro método de autenticación.', 401)
+      );
+    }
+
+    //googleSignIn
+  }
 
   res.status(200).json({
     status: 'success',

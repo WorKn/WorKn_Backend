@@ -17,8 +17,8 @@ let DB = process.env.DATABASE_HOST_LOCAL;
 // if (process.env.NODE_ENV === 'development') {
 //   DB = process.env.DATABASE_HOST_LOCAL;
 // } else if (process.env.NODE_ENV === 'staging') {
-//   DB = process.env.DATABASE_HOST.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
-//   DB = DB.replace('<DATABASE_NAME>', process.env.DATABASE_NAME);
+// DB = process.env.DATABASE_HOST.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
+// DB = DB.replace('<DATABASE_NAME>', process.env.DATABASE_NAME);
 // }
 
 //Establish database connection
@@ -30,3 +30,13 @@ module.exports = mongoose
     useFindAndModify: false,
   })
   .then(() => console.log('Database connection successfully established.'));
+
+// const User = require('../models/userModel');
+
+// User.updateMany({}, { signUpMethod: 'workn' }, function (err, docs) {
+//   if (err) {
+//     console.log(err);
+//   } else {
+//     console.log('Updated Docs : ', docs);
+//   }
+// });
