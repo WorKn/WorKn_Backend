@@ -22,7 +22,11 @@ const {
   uploadPhotoToCloudinary,
 } = require('./../controllers/photoUploadController');
 
+const reviewRouter = require('./reviewRoutes');
+
 const router = express.Router();
+
+router.use('/:userId/reviews', reviewRouter);
 
 //Routes
 router.post('/signup', signup);
