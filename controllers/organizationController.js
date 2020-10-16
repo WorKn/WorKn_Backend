@@ -50,7 +50,6 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     email: req.body.email,
     members: [req.user.id],
     bio: req.body.bio,
-    verified: req.body.verified,
   });
 
   const owner = await User.findById(req.user.id);

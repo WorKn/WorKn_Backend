@@ -23,7 +23,7 @@ const organizationSchema = new mongoose.Schema({
       },
     ],
   },
-  verified: {
+  isVerified: {
     type: Boolean,
     default: false,
   },
@@ -37,7 +37,6 @@ const organizationSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     lowercase: true,
     validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
   },
@@ -91,7 +90,7 @@ organizationSchema.methods.verifyRNCWithDGII = function () {
   console.log('Verifying RNC: ', this.RNC);
   isOrgRegisteredInDGII(this.RNC).then((isVerified) => {
     console.log(`Verification result of RNC ${this.RNC}: `, isVerified);
-    this.verified = isVerified;
+    this.isVerified = isVerified;
     this.save();
   });
 };
