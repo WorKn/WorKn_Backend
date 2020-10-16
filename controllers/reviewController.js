@@ -18,40 +18,21 @@ exports.protectReview = catchAsync(async (req, res, next) => {
 });
 
 exports.validateCreateReview = catchAsync(async (req, res, next) => {
-  const userReviewed = await User.findById(req.params.userId);
+  const userToBeReviewed = await User.findById(req.params.userId);
 
-  if (!userReviewed) {
+  if (!userToBeReviewed) {
     return next(new AppError('Usuario no encontrado.', 404));
   }
 
-  if (userReviewed.userType === req.user.userType) {
+  if (userToBeReviewed.userType === req.user.userType) {
     return next(new AppError('No puede hacer un review a un usuario de su mismo tipo.', 400));
   }
 
-  if (userReviewed.organization) {
+  if (userToBeReviewed.organization) {
     return next(new AppError('No puede hacer review de una organización.', 403));
   }
 
-  let interactions = [];
-
-  if (req.user.userType == 'offerer') {
-    interactions = Interaction.find({
-      state: 'match',
-      applicant: userReviewed.id,
-      offerer: req.user.id,
-    });
-  } else if (req.user.userType == 'applicant') {
-    interactions = Interaction.find({
-      state: 'match',
-      offerer: userReviewed.id,
-      applicant: req.user.id,
-    });
-  }
-
-  interactions = await interactions.populate({
-    path: 'offer',
-    match: { offerType: 'free' },
-  });
+  const interactions = await getMatchedInteractions(userToBeReviewed, req.user);
 
   if (interactions.length == 0 || areAllOffersNull(interactions)) {
     return next(
@@ -65,6 +46,64 @@ exports.validateCreateReview = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.setUsersIds = (req, res, next) => {
+  req.body.userReviewed = req.params.userId;
+  req.body.createdBy = req.user.id;
+
+  next();
+};
+
+exports.getReviewValidation = catchAsync(async (req, res, next) => {
+  let userCanBeReviewed = true;
+  const userToBeReviewed = await User.findById(req.params.userId);
+
+  if (
+    !userToBeReviewed ||
+    userToBeReviewed.userType === req.user.userType ||
+    userToBeReviewed.organization
+  ) {
+    userCanBeReviewed = false;
+  }
+
+  const interactions = await getMatchedInteractions(userToBeReviewed, req.user);
+
+  if (interactions.length == 0 || areAllOffersNull(interactions)) {
+    userCanBeReviewed = false;
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      userCanBeReviewed,
+    },
+  });
+});
+
+const getMatchedInteractions = async (userToBeReviewed, currentUser) => {
+  let interactions = [];
+
+  if (currentUser.userType == 'offerer') {
+    interactions = Interaction.find({
+      state: 'match',
+      applicant: userToBeReviewed.id,
+      offerer: currentUser.id,
+    });
+  } else if (currentUser.userType == 'applicant') {
+    interactions = Interaction.find({
+      state: 'match',
+      offerer: userToBeReviewed.id,
+      applicant: currentUser.id,
+    });
+  }
+
+  interactions = await interactions.populate({
+    path: 'offer',
+    match: { offerType: 'free' },
+  });
+
+  return interactions;
+};
+
 const areAllOffersNull = (interactions) => {
   let output = true;
   interactions.forEach((interaction) => {
@@ -72,13 +111,6 @@ const areAllOffersNull = (interactions) => {
   });
 
   return output;
-};
-
-exports.setUsersIds = (req, res, next) => {
-  req.body.userReviewed = req.params.userId;
-  req.body.createdBy = req.user.id;
-
-  next();
 };
 
 exports.getAllReviews = factory.getAll(Review);

@@ -8,6 +8,7 @@ const {
   protectReview,
   validateCreateReview,
   setUsersIds,
+  getReviewValidation,
 } = require('./../controllers/reviewController');
 const { protect } = require('./../controllers/authController');
 
@@ -17,6 +18,7 @@ const { protect } = require('./../controllers/authController');
 const router = express.Router({ mergeParams: true });
 
 router.get('/', getAllReviews);
+router.get('/validation', protect, getReviewValidation);
 router.get('/:id', getReview);
 
 //Protected routes
