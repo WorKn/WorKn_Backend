@@ -1,14 +1,17 @@
 const crypto = require('crypto');
 const factory = require('./handlerFactory');
+const jwt = require('jsonwebtoken');
+
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
 const MemberInvitation = require('../models/memberInvitationModel');
 const AppError = require('./../utils/appError');
+
 const catchAsync = require('./../utils/catchAsync');
 const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
-const jwt = require('jsonwebtoken');
+const { isOrgRegisteredInDGII } = require('./../utils/dgiiCrawler');
 
 exports.protectOrganization = catchAsync(async (req, res, next) => {
   if (req.user.userType == 'applicant') {
@@ -40,6 +43,10 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     return next(new AppError('Usted ya posee una organización asociada.', 400));
   }
 
+  if (req.body.RNC && (req.body.RNC.length == 9 || req.body.RNC.length == 11)) {
+    req.body.verified = await isOrgRegisteredInDGII(req.body.RNC);
+  }
+
   const organization = await Organization.create({
     name: req.body.name,
     RNC: req.body.RNC,
@@ -48,6 +55,7 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     email: req.body.email,
     members: [req.user.id],
     bio: req.body.bio,
+    verified: req.body.verified,
   });
   const owner = await User.findById(req.user.id);
   owner.organization = organization._id;
@@ -73,8 +81,13 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
   }
 
   allowedFields = ['name', 'location', 'bio', 'phone', 'email', 'profilePicture'];
-  if (req.organization.RNC) {
+  if (!req.organization.RNC) {
     allowedFields.push('RNC');
+
+    if (req.body.RNC && (req.body.RNC.length == 9 || req.body.RNC.length == 11)) {
+      allowedFields.push('verified');
+      req.body.verified = await isOrgRegisteredInDGII(req.body.RNC);
+    }
   }
   filteredBody = filterObj(req.body, allowedFields);
 
@@ -130,7 +143,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
     status: 'success',
     token: res.token,
     data: {
-      user: req.user,   
+      user: req.user,
     },
   });
 });
