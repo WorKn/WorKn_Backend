@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const locationSchema = require('../schemas/locationSchema');
+const { isOrgRegisteredInDGII } = require('./../utils/dgiiCrawler');
 
 const organizationSchema = new mongoose.Schema({
   name: {
@@ -85,6 +86,15 @@ organizationSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
+
+organizationSchema.methods.verifyRNCWithDGII = function () {
+  console.log('Verifying RNC: ', this.RNC);
+  isOrgRegisteredInDGII(this.RNC).then((isVerified) => {
+    console.log(`Verification result of RNC ${this.RNC}: `, isVerified);
+    this.verified = isVerified;
+    this.save();
+  });
+};
 
 const Organization = mongoose.model('Organization', organizationSchema);
 

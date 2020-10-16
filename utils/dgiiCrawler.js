@@ -6,17 +6,17 @@ exports.getContributorDGIIData = async (rnc) => {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    console.log('Going to page...');
+    // console.log('Going to page...');
     await page.goto(
       'https://dgii.gov.do/app/WebApps/ConsultasWeb2/ConsultasWeb/consultas/rnc.aspx'
     );
     await page.waitForSelector(selector);
 
-    console.log('Clicking element...');
+    // console.log('Clicking element...');
     await page.click(selector);
     await page.keyboard.type(rnc);
 
-    console.log('Pressing enter...');
+    // console.log('Pressing enter...');
     await page.keyboard.press('Enter');
 
     await page.waitForTimeout(500);

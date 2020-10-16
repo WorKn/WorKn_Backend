@@ -11,7 +11,6 @@ const catchAsync = require('./../utils/catchAsync');
 const sendEmail = require('./../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
-const { isOrgRegisteredInDGII } = require('./../utils/dgiiCrawler');
 
 exports.protectOrganization = catchAsync(async (req, res, next) => {
   if (req.user.userType == 'applicant') {
@@ -43,10 +42,6 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     return next(new AppError('Usted ya posee una organización asociada.', 400));
   }
 
-  if (req.body.RNC && (req.body.RNC.length == 9 || req.body.RNC.length == 11)) {
-    req.body.verified = await isOrgRegisteredInDGII(req.body.RNC);
-  }
-
   const organization = await Organization.create({
     name: req.body.name,
     RNC: req.body.RNC,
@@ -57,9 +52,14 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     bio: req.body.bio,
     verified: req.body.verified,
   });
+
   const owner = await User.findById(req.user.id);
   owner.organization = organization._id;
   await owner.save({ validateBeforeSave: false });
+
+  if (req.body.RNC) {
+    organization.verifyRNCWithDGII();
+  }
 
   res.status(201).json({
     status: 'success',
@@ -83,12 +83,8 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
   allowedFields = ['name', 'location', 'bio', 'phone', 'email', 'profilePicture'];
   if (!req.organization.RNC) {
     allowedFields.push('RNC');
-
-    if (req.body.RNC && (req.body.RNC.length == 9 || req.body.RNC.length == 11)) {
-      allowedFields.push('verified');
-      req.body.verified = await isOrgRegisteredInDGII(req.body.RNC);
-    }
   }
+
   filteredBody = filterObj(req.body, allowedFields);
 
   const updatedOrg = await Organization.findByIdAndUpdate(req.organization.id, filteredBody, {
@@ -97,6 +93,10 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
   });
 
   updatedOrg.save();
+
+  if (!req.organization.RNC && req.body.RNC) {
+    updatedOrg.verifyRNCWithDGII();
+  }
 
   res.status(200).json({
     status: 'success',
