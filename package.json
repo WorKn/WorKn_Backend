@@ -25,6 +25,7 @@
     "multer": "^1.4.2",
     "nodemailer": "^6.4.11",
     "nodemon": "^2.0.4",
+    "puppeteer": "^5.3.1",
     "streamifier": "^0.1.1",
     "validator": "^13.1.1"
   }
