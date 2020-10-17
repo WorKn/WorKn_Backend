@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer');
+// const puppeteer = require('puppeteer');
+const puppeteer = {};
 
 exports.getContributorDGIIData = async (rnc) => {
   try {
