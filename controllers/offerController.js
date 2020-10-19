@@ -14,6 +14,7 @@ exports.protectOffer = catchAsync(async (req, res, next) => {
   if (!offer) {
     return next(new AppError('No se ha podido encontrar la oferta especificada.', 404));
   }
+
   if (req.user.id != offer.createdBy) {
     if (req.user.organization) {
       if (req.user.organization != offer.organization) {
@@ -35,14 +36,6 @@ exports.protectOffer = catchAsync(async (req, res, next) => {
 
 exports.createOffer = catchAsync(async (req, res, next) => {
   try {
-    if (!req.user.organization && req.user.organizationRole) {
-      return next(
-        new AppError(
-          'Parece ser que usted figura como miembro de una organización pero no está vinculada a ninguna. No podemos permitirle crear esta oferta',
-          403
-        )
-      );
-    }
     const tagsRef = req.body.tags;
 
     //Update tag's ref with their values

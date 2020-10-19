@@ -8,7 +8,6 @@ const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
 
-
 exports.getAllUsers = factory.getAll(User);
 
 const getUsersWithTags = async (req,res) =>{
@@ -23,7 +22,6 @@ const getUsersWithTags = async (req,res) =>{
   .select('-__v')
 
   const users = new Set();
-
   tags.forEach(async (tagUser) => {
     users.add(tagUser.user);
   });
