@@ -47,7 +47,6 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   const interaction = await Interaction.findOne({
     offer: req.body.offer,
     applicant: interactionApplicant,
-    offerer: { $in: [interactionOfferer, undefined] },
   });
 
   if (interaction) {
@@ -55,14 +54,14 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
       new AppError('Usted ya tiene una interacción con esta oferta, por favor, verifique', 400)
     );
   }
-
+  
   const newInteraction = await Interaction.create({
     state: interactionState,
     offer: req.body.offer,
     applicant: interactionApplicant,
     offerer: interactionOfferer,
   });
-
+  
   res.status(201).json({
     status: 'success',
     data: {
