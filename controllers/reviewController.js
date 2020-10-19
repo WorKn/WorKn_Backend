@@ -10,7 +10,7 @@ const factory = require('./handlerFactory');
 exports.protectReview = catchAsync(async (req, res, next) => {
   const review = await Review.findById(req.params.id);
 
-  if (review && review.createdBy != req.user.id) {
+  if (review && review.createdBy.id != req.user.id) {
     return next(new AppError('No tiene permisos para modificar este review.', 403));
   }
 
