@@ -87,12 +87,12 @@ organizationSchema.pre('save', function (next) {
 });
 
 organizationSchema.methods.verifyRNCWithDGII = function () {
-  // console.log('Verifying RNC: ', this.RNC);
-  // isOrgRegisteredInDGII(this.RNC).then((isVerified) => {
-  //   console.log(`Verification result of RNC ${this.RNC}: `, isVerified);
-  //   this.isVerified = isVerified;
-  //   this.save();
-  // });
+  console.log('Verifying RNC: ', this.RNC);
+  isOrgRegisteredInDGII(this.RNC).then((isVerified) => {
+    console.log(`Verification result of RNC ${this.RNC}: `, isVerified);
+    this.isVerified = isVerified;
+    this.save();
+  });
 };
 
 const Organization = mongoose.model('Organization', organizationSchema);
