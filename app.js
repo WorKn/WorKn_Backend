@@ -11,6 +11,7 @@ const recommendationRouter = require('./routes/recommendationRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+const axios = require('axios');
 
 const app = express();
 
@@ -37,6 +38,14 @@ app.use('/api/v1/recommendations', recommendationRouter);
 //Temporal endpoint
 app.get('/', function (req, res) {
   res.send('Hello WorKn!!!');
+});
+
+app.get('/test', async function (req, res) {
+  const response = await axios.get('https://jsonplaceholder.typicode.com/todos/1');
+  res.status(200).json({
+    status: 'success',
+    data: response.data,
+  });
 });
 
 //---Error handling---
