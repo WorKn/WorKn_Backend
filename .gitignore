@@ -1,5 +1,4 @@
 # Logs
-test/
 logs
 *.log
 npm-debug.log*
@@ -103,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# DB Test
+test/
