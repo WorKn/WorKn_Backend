@@ -119,7 +119,8 @@ exports.createChat = catchAsync(async (req, res, next) => {
   }
 
   const io = req.app.get('socketio');
-  io.emit('chat_message', chat.id, message.message);
+  io.emit('chat_message', message.message);
+  // io.emit('chat_message', chat.id, message.message);
 
   res.status(201).json({
     status: 'success',
