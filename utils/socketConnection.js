@@ -18,6 +18,13 @@ const socketConnection = (io) => {
     //   io.emit('is_online', '🔴 <i>' + socket.username + ' left the chat..</i>');
     // });
 
+    socket.on('join_chat', (room_id) => {
+      console.log('Join chat event. Romm_Id: ', room_id);
+      socket.join(room_id);
+      // socket.to(room).emit('is_online', socket.username + ' joined the chat...');
+      // socket.emit('is_online', socket.username + ' joined the chat...');
+    });
+
     socket.on('username', (username) => {
       console.log('Username event...');
       socket.username = username;
@@ -25,10 +32,10 @@ const socketConnection = (io) => {
       socket.emit('is_online', socket.username + ' joined the chat...');
     });
 
-    socket.on('chat_message', (message) => {
-      // socket.to(room).emit('chat_message', socket.username + ': ' + message);
-      console.log('Sending message...');
-      socket.emit('chat_message', socket.username + ': ' + message);
+    socket.on('chat_message', (room_id, message) => {
+      console.log('Sending message. Room_id: ' + room_id + ' Message: ' + message);
+      // socket.emit('chat_message', socket.username + ': ' + message);
+      io.to(room_id).emit('chat_message', socket.username + ': ' + message);
     });
 
     socket.on('disconnect', (username) => {
