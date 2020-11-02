@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const sendEmail = require('./../utils/email');
 const getClientHost = require('../utils/getClientHost');
+const fs = require('fs');
+const util = require('util');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -252,11 +254,15 @@ userSchema.methods.sendValidationEmail = async function (req) {
   const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
   Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
 
+  const templatePath = './mail_templates/EmailValidation.html';
+  const htmlTemplate = await parseHtmlTemplate(templatePath, validationURL);
+
   try {
     sendEmail({
       email: this.email,
       subject: 'Validación de email',
       message,
+      html: htmlTemplate,
     });
   } catch (err) {
     user.cleanTokensArray('email');
@@ -265,6 +271,16 @@ userSchema.methods.sendValidationEmail = async function (req) {
 
     console.log(err);
   }
+};
+
+const parseHtmlTemplate = async (path, url) => {
+  const htmlTemplate = await util.promisify(fs.readFile)(path, {
+    encoding: 'utf-8',
+  });
+
+  const ParsedHtmlTemplate = htmlTemplate.replace('{%VALIDATION_URL%}', url);
+
+  return ParsedHtmlTemplate;
 };
 
 userSchema.methods.cleanTokensArray = async function (tokenType) {
