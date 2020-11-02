@@ -60,7 +60,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   newUser.sendValidationEmail(req);
-  await newUser.save({ validateBeforeSave: false });
+  // await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
 });

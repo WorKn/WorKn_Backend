@@ -2,10 +2,8 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const sendEmail = require('./../utils/email');
 const getClientHost = require('../utils/getClientHost');
-const fs = require('fs');
-const util = require('util');
+const Email = require('./../utils/email2');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
@@ -251,37 +249,51 @@ userSchema.methods.sendValidationEmail = async function (req) {
   validationToken = this.generateToken('email');
   const validationURL = `${getClientHost(req)}/emailvalidation/${validationToken}`;
 
-  const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
-  Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
-
-  const templatePath = './mail_templates/EmailValidation.html';
-  const htmlTemplate = await parseHtmlTemplate(templatePath, validationURL);
-
   try {
-    sendEmail({
-      email: this.email,
-      subject: 'Validación de email',
-      message,
-      html: htmlTemplate,
-    });
+    await new Email(this.email, validationURL).sendEmailValidation();
   } catch (err) {
-    user.cleanTokensArray('email');
+    console.log(err);
+    this.cleanTokensArray('email');
 
     await this.save({ validateBeforeSave: false });
-
-    console.log(err);
   }
 };
 
-const parseHtmlTemplate = async (path, url) => {
-  const htmlTemplate = await util.promisify(fs.readFile)(path, {
-    encoding: 'utf-8',
-  });
+// userSchema.methods.sendValidationEmail = async function (req) {
+//   validationToken = this.generateToken('email');
+//   const validationURL = `${getClientHost(req)}/emailvalidation/${validationToken}`;
 
-  const ParsedHtmlTemplate = htmlTemplate.replace('{%VALIDATION_URL%}', url);
+//   const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
+//   Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
 
-  return ParsedHtmlTemplate;
-};
+//   const templatePath = './mail_templates/EmailValidation.html';
+//   const htmlTemplate = await parseHtmlTemplate(templatePath, validationURL);
+
+//   try {
+//     sendEmail({
+//       email: this.email,
+//       subject: 'Validación de email',
+//       message,
+//       html: htmlTemplate,
+//     });
+//   } catch (err) {
+//     user.cleanTokensArray('email');
+
+//     await this.save({ validateBeforeSave: false });
+
+//     console.log(err);
+//   }
+// };
+
+// const parseHtmlTemplate = async (path, url) => {
+//   const htmlTemplate = await util.promisify(fs.readFile)(path, {
+//     encoding: 'utf-8',
+//   });
+
+//   const ParsedHtmlTemplate = htmlTemplate.replace('{%VALIDATION_URL%}', url);
+
+//   return ParsedHtmlTemplate;
+// };
 
 userSchema.methods.cleanTokensArray = async function (tokenType) {
   if (this.tokens) {
