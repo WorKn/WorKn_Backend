@@ -11,7 +11,6 @@ const recommendationRouter = require('./routes/recommendationRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
-const { isOrgRegisteredInDGII } = require('./utils/dgiiCrawler');
 
 const app = express();
 
@@ -38,14 +37,6 @@ app.use('/api/v1/recommendations', recommendationRouter);
 //Temporal endpoint
 app.get('/', function (req, res) {
   res.send('Hello WorKn!!!');
-});
-
-app.get('/test/:rnc', async function (req, res) {
-  const response = await isOrgRegisteredInDGII(req.params.rnc);
-  res.status(200).json({
-    status: 'success',
-    data: response,
-  });
 });
 
 //---Error handling---
