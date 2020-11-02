@@ -11,7 +11,7 @@ const recommendationRouter = require('./routes/recommendationRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
-const axios = require('axios');
+const { isOrgRegisteredInDGII } = require('./utils/dgiiCrawler');
 
 const app = express();
 
@@ -40,11 +40,11 @@ app.get('/', function (req, res) {
   res.send('Hello WorKn!!!');
 });
 
-app.get('/test', async function (req, res) {
-  const response = await axios.get('https://jsonplaceholder.typicode.com/todos/1');
+app.get('/test/:rnc', async function (req, res) {
+  const response = await isOrgRegisteredInDGII(req.params.rnc);
   res.status(200).json({
     status: 'success',
-    data: response.data,
+    data: response,
   });
 });
 
