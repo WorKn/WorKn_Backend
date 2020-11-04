@@ -4,13 +4,22 @@ This repository contains WorKn's Node.js backend code, including models, control
 
 This repository is only for the backend, to access the frontend click [here](https://github.com/WorKn/WorKn_Frontend).
 
+## Essentially, what is Workn?
+Workn is a web platform, whose main goal is to make a "match" or combination between two people, an employer or job offeror, and a person who is looking to meet this need, the match is made automatically based on variables such as the skill set or occupation of the person and the requirements of the job offer, in this way the most suitable employees are located for the offers. 
+
+In addition to this main functionality, it will also allow the manual search for people and offers. In short, a smart jobs platform.
+
+## The Motivation and Concept
+
+The Workn platform was born as a result of a resident improvement opportunity in the field of platforms for obtaining employment in the Dominican Republic. After the conception of the idea, with a survey, we found out that although there are various applications and sites that meet this objective, none of them meets all the specific objectives.
+
 ## Development environment
 
 For our project, we're using `vscode` with `Prettier` and `Cython` for code writing, `mongodb` as our database, and `postman` for testing.
 
 ## Running the repository
 
-for running our project you have to:
+To start the project you have to:
 
 1. `git clone https://github.com/WorKn/WorKn_Backend.git`
 2. `npm install`
