@@ -254,46 +254,15 @@ userSchema.methods.sendValidationEmail = async function (req) {
   } catch (err) {
     console.log(err);
     this.cleanTokensArray('email');
-
-    await this.save({ validateBeforeSave: false });
   }
 };
 
-// userSchema.methods.sendValidationEmail = async function (req) {
-//   validationToken = this.generateToken('email');
-//   const validationURL = `${getClientHost(req)}/emailvalidation/${validationToken}`;
+userSchema.methods.sendPasswordResetEmail = async function (req) {
+  const resetToken = this.generateToken('password');
+  const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
 
-//   const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
-//   Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
-
-//   const templatePath = './mail_templates/EmailValidation.html';
-//   const htmlTemplate = await parseHtmlTemplate(templatePath, validationURL);
-
-//   try {
-//     sendEmail({
-//       email: this.email,
-//       subject: 'Validación de email',
-//       message,
-//       html: htmlTemplate,
-//     });
-//   } catch (err) {
-//     user.cleanTokensArray('email');
-
-//     await this.save({ validateBeforeSave: false });
-
-//     console.log(err);
-//   }
-// };
-
-// const parseHtmlTemplate = async (path, url) => {
-//   const htmlTemplate = await util.promisify(fs.readFile)(path, {
-//     encoding: 'utf-8',
-//   });
-
-//   const ParsedHtmlTemplate = htmlTemplate.replace('{%VALIDATION_URL%}', url);
-
-//   return ParsedHtmlTemplate;
-// };
+  await new Email(this.email, resetURL).sendPasswordReset();
+};
 
 userSchema.methods.cleanTokensArray = async function (tokenType) {
   if (this.tokens) {

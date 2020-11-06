@@ -10,8 +10,7 @@ module.exports = class Email {
   }
 
   newTransport() {
-    // if (process.env.NODE_ENV === 'production') {
-    if (true) {
+    if (process.env.NODE_ENV === 'production') {
       //Sendgrid
       return nodemailer.createTransport({
         service: 'SendGrid',
@@ -37,24 +36,32 @@ module.exports = class Email {
   }
 
   // Send the actual email
-  async send(templateName, subject, plainText) {
+  async send(options) {
     // 1) Parse HTML
     const html = await util.promisify(fs.readFile)(
-      `${__dirname}/../mail_templates/${templateName}.html`,
+      `${__dirname}/../mail_templates/${options.templateName}.html`,
       {
         encoding: 'utf-8',
       }
     );
 
-    const ParsedHtml = html.replace('{%VALIDATION_URL%}', this.url);
+    let ParsedHtml = html.replace('{%URL%}', this.url);
+
+    if (options.organization) {
+      ParsedHtml = ParsedHtml.replace('{%ORG_NAME%}', options.organization.name);
+      ParsedHtml = ParsedHtml.replace(
+        '{%ORG_PROFILE__PICTURE%}',
+        options.organization.profilePicture
+      );
+    }
 
     // 2) Define email options
     const mailOptions = {
       from: this.from,
       to: this.to,
-      subject,
+      subject: options.subject,
       html: ParsedHtml,
-      text: plainText,
+      text: options.plainText,
     };
 
     // 3) Create a transport and send email
@@ -68,11 +75,36 @@ module.exports = class Email {
   }
 
   async sendEmailValidation() {
-    const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${this.url}\n
+    const plainText = `Para validar su email, por favor, haga clic en el siguiente enlace: ${this.url}\n
       Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
-    await this.send('EmailValidation', 'Validación de email', message);
+
+    await this.send({
+      templateName: 'EmailValidation',
+      subject: 'Validación de email',
+      plainText,
+    });
   }
 
-  async sendPasswordReset() {}
-  async sendMemberInvitation() {}
+  async sendPasswordReset() {
+    const plainText = `Para restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${this.url}\n
+    Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
+
+    await this.send({
+      templateName: 'PasswordReset',
+      subject: 'Restauración de contraseña (válido por 10 minutos)',
+      plainText,
+    });
+  }
+
+  async sendMemberInvitation(organization) {
+    const plainText = `Has sido invitado a ${organization.name} en WorKn, si deseas unirte accede a ${this.url},
+     de lo contrario, por favor, ignore este correo.`;
+
+    await this.send({
+      templateName: 'MemberInvitation',
+      subject: `Fuiste invitado a ${organization.name} en WorKn`,
+      plainText,
+      organization,
+    });
+  }
 };

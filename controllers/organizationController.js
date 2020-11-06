@@ -8,7 +8,7 @@ const MemberInvitation = require('../models/memberInvitationModel');
 const AppError = require('./../utils/appError');
 
 const catchAsync = require('./../utils/catchAsync');
-const sendEmail = require('./../utils/email');
+const Email = require('./../utils/email2');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
 
@@ -274,15 +274,16 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       invitedRole: req.body.invitation.role, //This can fail, mongoose error
     });
 
-    const invitationLink = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
+    const invitationUrl = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
+    const orgOptions = {
+      name: req.organization.name,
+      profilePicture: req.organization.profilePicture,
+    };
 
-    let message = `Has sido invitado a ${req.organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
     try {
-      await sendEmail({
-        email: req.body.invitation.email,
-        subject: `Fuiste invitado a ${req.organization.name} en WorKn`,
-        message,
-      });
+      await new Email(req.body.invitation.email, invitationUrl).sendMemberInvitation(
+        orgOptions
+      );
     } catch (error) {
       return next(
         new AppError(
@@ -295,7 +296,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Invitation sent',
+    message: 'Invitación enviada satisfactoriamente.',
   });
 });
 

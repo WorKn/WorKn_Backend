@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>Email Confirmation</title>
+    <title>Invitation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type="text/css">
       /**
@@ -160,10 +160,25 @@
                     color: #333234;
                   "
                 >
-                  Confirma tu email de Workn
+                  Invitación a empresa
                 </h1>
               </td>
             </tr>
+            <tr>
+                <td
+                  align="center"
+                  bgcolor="#ffffff"
+                  style="
+                    padding: 0px 24px 0;"
+                >
+                <img
+                  src="{%ORG_PROFILE__PICTURE%}"
+                  alt="OrganizationLogo"
+                  border="0"
+                  style="display: block; max-width: 200px; max-height: 200px; object-fit: cover;"
+                />             
+                </td>
+              </tr>
           </table>
           <!--[if (gte mso 9)|(IE)]>
         </td>
@@ -203,7 +218,8 @@
                 "
               >
                 <p style="margin: 0;">
-                  Haga click debajo en el botón para confirmar su email:
+                    Ha sido invitado a 
+                    <b>{%ORG_NAME%}</b> en WorKn, si desea unirse acceda haciendo click en el botón:
                 </p>
               </td>
             </tr>
@@ -234,7 +250,7 @@
                                 text-decoration: none;
                                 border-radius: 6px;
                               "
-                              >Confirmar email</a
+                              >Aceptar Invitación</a
                             >
                           </td>
                         </tr>
@@ -286,8 +302,7 @@
                 "
               >
                 <p style="margin: 0;">
-                  Si no se ha registrado en la plataforma, por favor ignore este
-                  mensaje.
+                  Si no ha sido invitado, por favor ignore este correo.
                 </p>
               </td>
             </tr>

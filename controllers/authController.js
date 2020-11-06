@@ -60,7 +60,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   newUser.sendValidationEmail(req);
-  // await newUser.save({ validateBeforeSave: false });
+  await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
 });
@@ -105,28 +105,16 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     );
   }
 
-  //Generate reset token and save user document
-  const resetToken = user.generateToken('password');
-  await user.save({ validateBeforeSave: false });
-
-  //Send email to user
-  const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
-
-  const message = `Para restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${resetURL}\n
-  Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
-
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Restauración de contraseña (válido por 10 minutos)',
-      message,
-    });
+    await user.sendPasswordResetEmail(req);
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
       status: 'success',
-      message: 'Token sent to email.',
+      message: 'Email de restauración enviado satisfactoriamente.',
     });
   } catch (err) {
+    console.log(err);
     user.cleanTokensArray('password');
 
     await user.save({ validateBeforeSave: false });
