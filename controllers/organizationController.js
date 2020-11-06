@@ -8,7 +8,7 @@ const MemberInvitation = require('../models/memberInvitationModel');
 const AppError = require('./../utils/appError');
 
 const catchAsync = require('./../utils/catchAsync');
-const Email = require('./../utils/email2');
+const Email = require('../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
 

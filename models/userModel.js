@@ -3,7 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const getClientHost = require('../utils/getClientHost');
-const Email = require('./../utils/email2');
+const Email = require('../utils/email');
 
 const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
