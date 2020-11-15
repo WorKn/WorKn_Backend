@@ -185,7 +185,7 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
     chats.map(async (chat) => {
       chat.lastMessage = await Message.findById(chat.lastMessage).select('-__v');
 
-      const userToRename = req.user.id == chat.user1 ? 'user1' : 'user2';
+      const userToRename = chat.user1 != null ? 'user1' : 'user2';
       chat = renameChatUser(chat, userToRename);
 
       chat.messages = undefined;
