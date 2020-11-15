@@ -126,6 +126,7 @@ exports.createChat = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       chat,
+      lastMessage: message,
     },
   });
 });
