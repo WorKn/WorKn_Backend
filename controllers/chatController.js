@@ -146,8 +146,8 @@ exports.createMessage = catchAsync(async (req, res, next) => {
   chat.messages.push(message.id);
   chat = await chat.save();
 
-  const io = req.app.get('socketio');
-  io.emit('chat_message', chat.id, message.message);
+  // const io = req.app.get('socketio');
+  // io.emit('chat_message', chat.id, message.message);
 
   res.status(201).json({
     status: 'success',
