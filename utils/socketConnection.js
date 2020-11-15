@@ -35,7 +35,7 @@ const socketConnection = (io) => {
     socket.on('chat_message', (room_id, message) => {
       console.log('Sending message. Room_id: ' + room_id + ' Message: ' + message);
       // socket.emit('chat_message', socket.username + ': ' + message);
-      io.to(room_id).emit('chat_message', socket.username + ': ' + message);
+      io.to(room_id).emit('chat_message', message);
     });
 
     socket.on('disconnect', (username) => {
