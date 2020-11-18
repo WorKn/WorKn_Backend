@@ -8,6 +8,7 @@ const organizationRouter = require('./routes/organizationRoutes');
 const offerRouter = require('./routes/offerRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
 const recommendationRouter = require('./routes/recommendationRoutes');
+const statRouter = require('./routes/statRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -33,6 +34,7 @@ app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/offers', offerRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/recommendations', recommendationRouter);
+app.use('/api/v1/stats', statRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {
