@@ -38,6 +38,11 @@ const socketConnection = (io) => {
       io.to(room_id).emit('chat_message', message);
     });
 
+    socket.on('chat_typing', (room_id) => {
+      console.log('Typing. Room_id: ' + room_id);
+      io.to(room_id).emit('chat_typing');
+    });
+
     socket.on('disconnect', (username) => {
       // socket.to(room).emit('is_online', socket.username + ' left the chat...');
       socket.emit('is_online', socket.username + ' left the chat...');
