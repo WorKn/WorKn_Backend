@@ -118,10 +118,6 @@ exports.createChat = catchAsync(async (req, res, next) => {
     await user2.save({ validateBeforeSave: false });
   }
 
-  // const io = req.app.get('socketio');
-  // io.emit('chat_message', message.message);
-  // io.emit('chat_message', req.user.email, message.message);
-
   res.status(201).json({
     status: 'success',
     data: {
@@ -145,9 +141,6 @@ exports.createMessage = catchAsync(async (req, res, next) => {
 
   chat.messages.push(message.id);
   chat = await chat.save();
-
-  // const io = req.app.get('socketio');
-  // io.emit('chat_message', chat.id, message.message);
 
   res.status(201).json({
     status: 'success',
