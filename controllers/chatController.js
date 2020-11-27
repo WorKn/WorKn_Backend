@@ -150,25 +150,26 @@ exports.createMessage = catchAsync(async (req, res, next) => {
   });
 });
 
-const userChatFields = '_id name lastname profilePicture';
+const userChatFields = '_id name lastname profilePicture organization';
+
+const populateUser = (path, userId) => {
+  return {
+    path,
+    match: { _id: { $ne: userId } },
+    select: userChatFields,
+    populate: {
+      path: 'organization',
+      select: '_id profilePicture name email',
+    },
+  };
+};
 
 exports.getMyChats = catchAsync(async (req, res, next) => {
   const user = await req.user
     .populate({
       path: 'chats',
       select: '_id messages',
-      populate: [
-        {
-          path: 'user1',
-          match: { _id: { $ne: req.user.id } },
-          select: userChatFields,
-        },
-        {
-          path: 'user2',
-          match: { _id: { $ne: req.user.id } },
-          select: userChatFields,
-        },
-      ],
+      populate: [populateUser('user1', req.user.id), populateUser('user2', req.user.id)],
     })
     .execPopulate();
 
