@@ -5,13 +5,9 @@ const Offer = require('../models/offerModel');
 const AppError = require('./../utils/appError');
 
 exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
-
   if (req.user.userType != 'applicant') {
     return next(
-      new AppError(
-        'Lo sentimos,pero solo podemos recomendar ofertas a un aplicante',
-        403
-      )
+      new AppError('Lo sentimos,pero solo podemos recomendar ofertas a un aplicante', 403)
     );
   }
   const fieldsToShow = '_id name email profilePicture';
@@ -19,7 +15,7 @@ exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
     .populate({
       path: 'offer',
       select: '-__v',
-      match: {state: { $nin: ['deleted', 'paused']}},
+      match: { state: { $nin: ['deleted', 'paused'] } },
       populate: [
         { path: 'category', select: '-__v' },
         { path: 'organization', select: fieldsToShow + ' phone' },
@@ -41,7 +37,7 @@ exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
     status: 'success',
     results: recommended.length,
     data: {
-        offers: recommended,
+      offers: recommended,
     },
   });
 });
@@ -55,27 +51,30 @@ exports.getUserRecommendation = catchAsync(async (req, res, next) => {
       )
     );
   }
-  if(req.user.organization){
+  if (req.user.organization) {
     offers = await Offer.find({
       organization: req.user.organization,
-      state: { $nin: ['deleted', 'paused']},
+      state: { $nin: ['deleted', 'paused'] },
     });
-  }else{
+  } else {
     offers = await Offer.find({
       createdBy: req.user.id,
-      state: { $nin: ['deleted', 'paused']},
+      state: { $nin: ['deleted', 'paused'] },
     });
   }
   offersRecommended = [];
   recommendedCount = 0;
-  
+
   for (let offer of offers) {
     tags = [];
     offer.tags.forEach((tag) => {
       tags.push(tag.id);
     });
 
-    tagsUser = await tagUser.find({ tag: { $in: tags } }).populate('user');
+    tagsUser = await tagUser.find({ tag: { $in: tags } }).populate({
+      path: 'user',
+      populate: { path: 'category', select: '-__v' },
+    });
     usersTags = Array.from(tagsUser);
     recommended = new Set();
 

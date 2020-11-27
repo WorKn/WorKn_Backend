@@ -23,8 +23,11 @@ const {
 } = require('./../controllers/photoUploadController');
 
 const chatRouter = require('./chatRoutes');
+const reviewRouter = require('./reviewRoutes');
 
 const router = express.Router();
+
+router.use('/:userId/reviews', reviewRouter);
 
 //Routes
 
