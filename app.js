@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const http = require('http');
 
 const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
@@ -12,8 +13,15 @@ const statRouter = require('./routes/statRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+const socketConnection = require('./utils/socketConnection');
 
 const app = express();
+const server = http.createServer(app);
+
+let io = require('socket.io').listen(server);
+io = socketConnection(io);
+
+app.set('socketio', io);
 
 //---Global Middlewares---
 
@@ -48,5 +56,5 @@ app.all('*', (req, res, next) => {
 
 app.use(globalErrorHandler);
 
-//---App export---
-module.exports = app;
+//---Export---
+module.exports = server;

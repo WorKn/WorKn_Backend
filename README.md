@@ -2,7 +2,7 @@
 
 This repository contains WorKn's Node.js backend code, including models, controllers, routes, and server. This repository is for educational purposes, intending to prepare and design a graduate-level proposal for graduation.
 
-This repository is only for the backend, to access the frontend click [here](https://github.com/WorKn/WorKn_Frontend).
+This repository is only for the backend, to access the frontend click [here](https://github.com/WorKn/WorKn_Frontend/tree/develop).
 
 ## Essentially, what is Workn?
 Workn is a web platform, whose main goal is to make a "match" or combination between two people, an employer or job offeror, and a person who is looking to meet this need, the match is made automatically based on variables such as the skill set or occupation of the person and the requirements of the job offer, in this way the most suitable employees are located for the offers. 
