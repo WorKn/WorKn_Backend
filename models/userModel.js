@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const getClientHost = require('../utils/getClientHost');
 const Email = require('../utils/email');
 
-const locationSchema = require('../schemas/locationSchema');
+// const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
 const userSchema = new mongoose.Schema(
@@ -75,8 +75,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
+    // location: {
+    //   type: locationSchema,
+    //   select: false,
+    // },
     location: {
-      type: locationSchema,
+      type: String,
+      maxlength: 3000,
       select: false,
     },
     password: {
