@@ -34,97 +34,85 @@ exports.protectOffer = catchAsync(async (req, res, next) => {
 });
 
 exports.createOffer = catchAsync(async (req, res, next) => {
-  try {
-    if (!req.user.organization && req.user.organizationRole) {
-      return next(
-        new AppError(
-          'Parece ser que usted figura como miembro de una organización pero no está vinculada a ninguna. No podemos permitirle crear esta oferta',
-          403
-        )
-      );
-    }
-    const tagsRef = req.body.tags;
-
-    //Update tag's ref with their values
-    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
-
-    const offer = await Offer.create({
-      title: req.body.title,
-      description: req.body.description,
-      offerType: req.body.offerType,
-      location: req.body.location,
-      createdBy: req.user.id,
-      organization: req.user.organization,
-      tags: req.body.tags,
-      category: req.body.category,
-      closingDate: req.body.closingDate,
-      salaryRange: req.body.salaryRange,
-    });
-
-    //This is necessary due to the current way that updateTags works
-    const offerWithoutTags = new Offer(offer);
-    offerWithoutTags.tags = [];
-
-    updateTags(offerWithoutTags, tagsRef, TagOffer);
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        offer,
-      },
-    });
-  } catch (error) {
+  if (!req.user.organization && req.user.organizationRole) {
     return next(
-      new AppError('Lo sentimos, algo salió mal al crear su oferta, intente nuevamente', 500)
+      new AppError(
+        'Parece ser que usted figura como miembro de una organización pero no está vinculada a ninguna. No podemos permitirle crear esta oferta',
+        403
+      )
     );
   }
+  const tagsRef = req.body.tags;
+
+  //Update tag's ref with their values
+  req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
+
+  const offer = await Offer.create({
+    title: req.body.title,
+    description: req.body.description,
+    offerType: req.body.offerType,
+    location: req.body.location,
+    createdBy: req.user.id,
+    organization: req.user.organization,
+    tags: req.body.tags,
+    category: req.body.category,
+    closingDate: req.body.closingDate,
+    salaryRange: req.body.salaryRange,
+  });
+
+  //This is necessary due to the current way that updateTags works
+  const offerWithoutTags = new Offer(offer);
+  offerWithoutTags.tags = [];
+
+  updateTags(offerWithoutTags, tagsRef, TagOffer);
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      offer,
+    },
+  });
 });
 
 exports.editOffer = catchAsync(async (req, res, next) => {
-  try {
-    const tagsRef = req.body.tags;
+  const tagsRef = req.body.tags;
 
-    const allowedFields = [
-      'title',
-      'description',
-      'offerType',
-      'location',
-      'category',
-      'closingDate',
-      'salaryRange',
-      'tags',
-    ];
+  const allowedFields = [
+    'title',
+    'description',
+    'offerType',
+    'location',
+    'category',
+    'closingDate',
+    'salaryRange',
+    'tags',
+  ];
 
-    //Update tag's ref with their values
-    if (req.body.tags) {
-      req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
-    }
-
-    //Filter out unwanted fields names that are not allowed to be updated
-    const filteredBody = filterObj(req.body, allowedFields);
-
-    // Update offer document
-    const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
-      new: true,
-      runValidators: true,
-    });
-
-    updatedOffer.save();
-
-    //Update TagOffer records asynchronously
-    if (tagsRef) updateTags(req.offer, tagsRef, TagOffer);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        offer: updatedOffer,
-      },
-    });
-  } catch (error) {
-    return next(
-      new AppError('Lo sentimos, algo salió mal al editar su oferta, intente nuevamente', 500)
-    );
+  //Update tag's ref with their values
+  if (req.body.tags) {
+    req.body.tags = await Tag.find({ _id: { $in: req.body.tags } }).select('-__v');
   }
+
+  //Filter out unwanted fields names that are not allowed to be updated
+  const filteredBody = filterObj(req.body, allowedFields);
+
+  // Update offer document
+  const updatedOffer = await Offer.findByIdAndUpdate(req.params.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  updatedOffer.save();
+
+  //Update TagOffer records asynchronously
+  if (tagsRef) updateTags(req.offer, tagsRef, TagOffer);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      offer: updatedOffer,
+    },
+  });
 });
 
 exports.deleteOffer = catchAsync(async (req, res, next) => {
@@ -185,7 +173,7 @@ const getOfferWithTags = async (req, res) => {
         },
       ],
     })
-  .select('-__v')
+    .select('-__v');
 
   const offers = new Set();
   tags.forEach(async (tagOffer) => {
@@ -200,6 +188,6 @@ const getOfferWithTags = async (req, res) => {
   });
 };
 
-exports.GetOffersHandler  = catchAsync(async(req, res, next)=>{
-  req.query.tags? getOfferWithTags(req,res) : this.getAllOffers(req,res,next);
+exports.GetOffersHandler = catchAsync(async (req, res, next) => {
+  req.query.tags ? getOfferWithTags(req, res) : this.getAllOffers(req, res, next);
 });
