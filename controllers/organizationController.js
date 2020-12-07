@@ -256,11 +256,6 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     });
   }
   if (!orgUserEmail.includes(req.body.invitation.email)) {
-    /* let encryptedEmail = crypto
-      .createHash('sha256')
-      .update(req.body.invitation.email)
-      .digest('hex'); */
-
     await MemberInvitation.deleteOne({
       organization: req.organization.id,
       email: req.body.invitation.email,
