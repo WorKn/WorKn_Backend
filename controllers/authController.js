@@ -5,8 +5,6 @@ const User = require('./../models/userModel');
 
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const sendEmail = require('./../utils/email');
-const getClientHost = require('./../utils/getClientHost');
 
 const { promisify } = require('util');
 
@@ -105,28 +103,16 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     );
   }
 
-  //Generate reset token and save user document
-  const resetToken = user.generateToken('password');
-  await user.save({ validateBeforeSave: false });
-
-  //Send email to user
-  const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
-
-  const message = `Para restaurar su contraseña, por favor, haga clic en el siguiente enlace: ${resetURL}\n
-  Si no ha olvidado su contraseña, por favor ignore este mensaje.`;
-
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Restauración de contraseña (válido por 10 minutos)',
-      message,
-    });
+    await user.sendPasswordResetEmail(req);
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
       status: 'success',
-      message: 'Token sent to email.',
+      message: 'Email de restauración enviado satisfactoriamente.',
     });
   } catch (err) {
+    console.log(err);
     user.cleanTokensArray('password');
 
     await user.save({ validateBeforeSave: false });
@@ -242,7 +228,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   //Validate token and decode
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id).select('+chats');
 
   //Check if the user owner of the token still exists
   if (!currentUser) {
