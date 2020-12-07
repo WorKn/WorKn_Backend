@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'Por favor, provea su correo electrónico.'],
-      unique: [true],
+      unique: true,
       lowercase: true,
       validate: [validator.isEmail, 'Por favor, ingrese un correo electrónico válido.'],
     },
@@ -211,9 +211,7 @@ userSchema.post('save', function(error, doc, next) {
   if (error.code === 11000 && error.keyPattern.email){
     next( new AppError(`Ya existe una cuenta con el correo ${this.email}. Por favor, ingrese uno distinto.`, 400));
   }
-  next(error)
-    //next(new Error('teeeeeeeeeeeeeeest'));
-  
+  next(error)  
 }); 
 userSchema.methods.verifyPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
