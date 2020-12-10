@@ -256,24 +256,27 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     });
   }
   if (!orgUserEmail.includes(req.body.invitation.email)) {
-    let encryptedEmail = crypto
-      .createHash('sha256')
-      .update(req.body.invitation.email)
-      .digest('hex');
-
     await MemberInvitation.deleteOne({
       organization: req.organization.id,
-      email: encryptedEmail,
+      email: req.body.invitation.email,
     });
+    const user = await User.find({email: req.body.invitation.email});
+    if(user){
+      return next(
+        new AppError(
+          `Ya existe una cuenta con el correo ${req.body.invitation.email}. Por favor, ingrese uno distinto.`,
+          400
+        )
+      );
+    }
     const invitationToken = crypto.randomBytes(32).toString('hex'); // create
-
+    
     await MemberInvitation.create({
       organization: req.organization.id,
       email: req.body.invitation.email, // this can fail, mongoose error
       token: invitationToken,
       invitedRole: req.body.invitation.role, //This can fail, mongoose error
     });
-
     const invitationUrl = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
     const orgOptions = {
       name: req.organization.name,
