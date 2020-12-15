@@ -70,7 +70,7 @@ exports.protectChat = catchAsync(async (req, res, next) => {
 
   if (req.user.id != chat.user1 && req.user.id != chat.user2) {
     return next(
-      new AppError('No tiene permiso de enviar un mensaje en el chat especificado.', 401)
+      new AppError('No tiene permiso de interactuar con el chat especificado.', 401)
     );
   }
 
@@ -96,7 +96,7 @@ exports.createChat = catchAsync(async (req, res, next) => {
   });
 
   const query = { $in: [req.user.id, req.user2.id] };
-  chat = await Chat.findOne({ user1: query, user2: query });
+  chat = await Chat.findOne({ user1: query, user2: query, isLive: true });
 
   if (chat) {
     chat.messages.push(message.id);
@@ -121,7 +121,7 @@ exports.createChat = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'success',
     data: {
-      chat,
+      chat, //TODO: Remove this field
       lastMessage: message,
     },
   });
@@ -150,6 +150,20 @@ exports.createMessage = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.closeChat = catchAsync(async (req, res, next) => {
+  let chat = req.chat;
+
+  chat.isLive = false;
+  chat = await chat.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      chat,
+    },
+  });
+});
+
 const userChatFields = '_id name lastname profilePicture organization';
 
 const populateUser = (path, userId) => {
@@ -168,6 +182,7 @@ exports.getMyChats = catchAsync(async (req, res, next) => {
   const user = await req.user
     .populate({
       path: 'chats',
+      match: { isLive: true },
       select: '_id messages',
       populate: [populateUser('user1', req.user.id), populateUser('user2', req.user.id)],
     })
