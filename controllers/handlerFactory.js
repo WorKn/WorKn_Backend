@@ -116,7 +116,7 @@ const getOneFieldsHandler = (Model, query, req) => {
 const getAllFieldsHandler = (Model, query) => {
   switch (Model.modelName) {
     case 'Offer':
-      const fieldsToShow = '_id name email profilePicture';
+      const fieldsToShow = '_id name lastname email profilePicture';
       query.populate({
         path: 'organization',
         select: fieldsToShow + ' phone',

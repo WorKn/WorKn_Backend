@@ -264,7 +264,7 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};
-  const fieldsToShow = '_id name email profilePicture';
+  const fieldsToShow = '_id name lastname email profilePicture';
 
   if (req.user.userType == 'applicant') {
     interactions = await Interaction.find({ applicant: req.user.id })
