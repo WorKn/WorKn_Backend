@@ -3,6 +3,7 @@ const filterObj = require('./../utils/filterObj');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
 const updateTags = require('./../utils/updateTags');
+const closeInteractions = require('./../utils/closeInteractions');
 
 const Offer = require('../models/offerModel');
 const TagOffer = require('./../models/tagOfferModel');
@@ -143,6 +144,7 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
   deletedOffer.save();
 
   updateTags(req.offer, [], TagOffer);
+  closeInteractions(req.params.id);
 
   res.status(204).json({
     status: 'success',
@@ -185,7 +187,7 @@ const getOfferWithTags = async (req, res) => {
         },
       ],
     })
-  .select('-__v')
+    .select('-__v');
 
   const offers = new Set();
   tags.forEach(async (tagOffer) => {
@@ -200,6 +202,6 @@ const getOfferWithTags = async (req, res) => {
   });
 };
 
-exports.GetOffersHandler  = catchAsync(async(req, res, next)=>{
-  req.query.tags? getOfferWithTags(req,res) : this.getAllOffers(req,res,next);
+exports.GetOffersHandler = catchAsync(async (req, res, next) => {
+  req.query.tags ? getOfferWithTags(req, res) : this.getAllOffers(req, res, next);
 });
