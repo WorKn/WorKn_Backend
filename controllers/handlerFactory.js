@@ -98,7 +98,7 @@ const getOneFieldsHandler = (Model, query, req) => {
   switch (Model.modelName) {
     case 'User':
       if (req.user && req.params.id === req.user.id) {
-        fieldsToShow = '+location +phone +identificationNumber';
+        fieldsToShow = '+location +phone +identificationNumber +chats';
       }
       break;
     case 'Organization':

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const locationSchema = require('../schemas/locationSchema');
+// const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
 const offerSchema = mongoose.Schema({
@@ -23,9 +23,11 @@ const offerSchema = mongoose.Schema({
     enum: ['active', 'paused', 'deleted'],
     default: 'active',
   },
-
-  location: locationSchema,
-
+  // location: locationSchema,
+  location: {
+    type: String,
+    maxlength: 3000,
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
