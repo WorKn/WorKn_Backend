@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const locationSchema = require('../schemas/locationSchema');
+// const locationSchema = require('../schemas/locationSchema');
 const { isOrgRegisteredInDGII } = require('./../utils/dgiiCrawler');
 
 const organizationSchema = new mongoose.Schema({
@@ -27,7 +27,11 @@ const organizationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  location: locationSchema,
+  // location: locationSchema,
+  location: {
+    type: String,
+    maxlength: 3000,
+  },
   phone: {
     type: String,
     validate: [

@@ -3,9 +3,10 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const getClientHost = require('../utils/getClientHost');
+const AppError = require('./../utils/appError');
 const Email = require('../utils/email');
 
-const locationSchema = require('../schemas/locationSchema');
+// const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
 const userSchema = new mongoose.Schema(
@@ -25,6 +26,8 @@ const userSchema = new mongoose.Schema(
     identificationNumber: {
       type: String,
       select: false,
+      unique: true,
+      sparse: true,
       validate: [
         {
           validator: validator.isNumeric,
@@ -75,8 +78,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
+    // location: {
+    //   type: locationSchema,
+    //   select: false,
+    // },
     location: {
-      type: locationSchema,
+      type: String,
+      maxlength: 3000,
       select: false,
     },
     password: {
@@ -204,7 +212,12 @@ userSchema.pre('save', function (next) {
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
-
+userSchema.post('save', function(error, doc, next) {
+  if (error.code === 11000 && error.keyPattern.email){
+    next( new AppError(`Ya existe una cuenta con el correo ${this.email}. Por favor, ingrese uno distinto.`, 400));
+  }
+  next(error)  
+}); 
 userSchema.methods.verifyPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
