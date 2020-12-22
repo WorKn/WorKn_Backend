@@ -115,34 +115,41 @@ exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
     return next(new AppError('Proporcione un código de autenticación de Google.', 400));
   }
 
-  const payload = await getGoogleAuthInformation(req.query.code);
+  const payload = await getGoogleAuthInformation(req.query.code, req.query.redirect_uri);
 
   if (!payload) return next(new AppError('Internal server error.', 500));
 
   const { email, given_name, family_name, picture } = payload;
-
   const user = await User.findOne({ email });
+  let responseData;
 
-  const isUserRegistered = user ? true : false;
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      isUserRegistered,
+  if (user) {
+    responseData = {
+      isUserRegistered: true,
+    };
+  } else {
+    responseData = {
+      isUserRegistered: false,
       name: given_name,
       lastname: family_name,
       email,
       profilePicture: picture,
-    },
+    };
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: responseData,
   });
 });
 
-getGoogleAuthInformation = async (code) => {
+getGoogleAuthInformation = async (code, redirect_uri) => {
   try {
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_AUTH_CLIENT_ID,
       process.env.GOOGLE_AUTH_CLIENT_SECRET,
-      process.env.GOOGLE_AUTH_REDIRECT_URI
+      redirect_uri
+      // process.env.GOOGLE_AUTH_REDIRECT_URI
     );
 
     //Get user's Google tokens
