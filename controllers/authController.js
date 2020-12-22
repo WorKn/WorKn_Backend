@@ -83,22 +83,13 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.googleAuth = catchAsync(async (req, res, next) => {
-  const oAuth2Client = new OAuth2Client(
-    process.env.GOOGLE_AUTH_CLIENT_ID,
-    process.env.GOOGLE_AUTH_CLIENT_SECRET,
-    req.body.redirectUri
-  );
+  if (!req.body.code) {
+    return next(new AppError('Proporcione un código de autenticación de Google.', 400));
+  }
 
-  //Get user's Google tokens
-  const { tokens } = await oAuth2Client.getToken(req.body.code);
+  const payload = await getGoogleAuthInformation(req.body.code);
 
-  //Decode user's Google id_token
-  const decodedIdToken = await oAuth2Client.verifyIdToken({
-    idToken: tokens.id_token,
-    audience: process.env.GOOGLE_AUTH_CLIENT_ID,
-  });
-
-  const payload = decodedIdToken.getPayload();
+  if (!payload) return; //error
 
   const user = await User.findOne({ email: payload.email });
 
@@ -118,6 +109,59 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
     status: 'success',
   });
 });
+
+exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
+  if (!req.query.code) {
+    return next(new AppError('Proporcione un código de autenticación de Google.', 400));
+  }
+
+  const payload = await getGoogleAuthInformation(req.query.code);
+
+  if (!payload) return next(new AppError('Internal server error.', 500));
+
+  const { email, given_name, family_name, picture } = payload;
+
+  const user = await User.findOne({ email });
+
+  const isUserRegistered = user ? true : false;
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      isUserRegistered,
+      name: given_name,
+      lastname: family_name,
+      email,
+      profilePicture: picture,
+    },
+  });
+});
+
+getGoogleAuthInformation = async (code) => {
+  try {
+    const oAuth2Client = new OAuth2Client(
+      process.env.GOOGLE_AUTH_CLIENT_ID,
+      process.env.GOOGLE_AUTH_CLIENT_SECRET,
+      process.env.GOOGLE_AUTH_REDIRECT_URI
+    );
+
+    //Get user's Google tokens
+    const { tokens } = await oAuth2Client.getToken(code);
+
+    //Decode user's Google id_token
+    const decodedIdToken = await oAuth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_AUTH_CLIENT_ID,
+    });
+
+    const payload = decodedIdToken.getPayload();
+
+    return payload;
+  } catch (err) {
+    console.log(err.response.data.error);
+    return undefined;
+  }
+};
 
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
