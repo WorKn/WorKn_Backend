@@ -16,7 +16,7 @@ exports.validateInteraction = catchAsync(async (req, res, next) => {
     return next(new AppError('La interación no existe.', 404));
   }
 
-  if (!interaction.isOfferClosed) {
+  if (interaction.isOfferClosed) {
     return next(new AppError('Esta oferta ha sido eliminada.', 401));
   }
 
