@@ -2,16 +2,26 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const http = require('http');
 
 const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const offerRouter = require('./routes/offerRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
+const recommendationRouter = require('./routes/recommendationRoutes');
+const statRouter = require('./routes/statRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+const socketConnection = require('./utils/socketConnection');
 
 const app = express();
+const server = http.createServer(app);
+
+let io = require('socket.io').listen(server);
+io = socketConnection(io);
+
+app.set('socketio', io);
 
 //---Global Middlewares---
 
@@ -31,6 +41,8 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/offers', offerRouter);
 app.use('/api/v1/categories', categoryRouter);
+app.use('/api/v1/recommendations', recommendationRouter);
+app.use('/api/v1/stats', statRouter);
 
 //Temporal endpoint
 app.get('/', function (req, res) {
@@ -44,5 +56,5 @@ app.all('*', (req, res, next) => {
 
 app.use(globalErrorHandler);
 
-//---App export---
-module.exports = app;
+//---Export---
+module.exports = server;

@@ -1,14 +1,16 @@
 const crypto = require('crypto');
 const factory = require('./handlerFactory');
+const jwt = require('jsonwebtoken');
+
 const Organization = require('./../models/organizationModel');
 const User = require('./../models/userModel');
 const MemberInvitation = require('../models/memberInvitationModel');
 const AppError = require('./../utils/appError');
+
 const catchAsync = require('./../utils/catchAsync');
-const sendEmail = require('./../utils/email');
+const Email = require('../utils/email');
 const filterObj = require('./../utils/filterObj');
 const getClientHost = require('./../utils/getClientHost');
-const jwt = require('jsonwebtoken');
 
 exports.protectOrganization = catchAsync(async (req, res, next) => {
   if (req.user.userType == 'applicant') {
@@ -49,9 +51,14 @@ exports.createOrganization = catchAsync(async (req, res, next) => {
     members: [req.user.id],
     bio: req.body.bio,
   });
+
   const owner = await User.findById(req.user.id);
   owner.organization = organization._id;
   await owner.save({ validateBeforeSave: false });
+
+  if (req.body.RNC) {
+    organization.verifyRNCWithDGII();
+  }
 
   res.status(201).json({
     status: 'success',
@@ -73,9 +80,10 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
   }
 
   allowedFields = ['name', 'location', 'bio', 'phone', 'email', 'profilePicture'];
-  if (req.organization.RNC) {
+  if (!req.organization.RNC) {
     allowedFields.push('RNC');
   }
+
   filteredBody = filterObj(req.body, allowedFields);
 
   const updatedOrg = await Organization.findByIdAndUpdate(req.organization.id, filteredBody, {
@@ -84,6 +92,10 @@ exports.editMyOrganization = catchAsync(async (req, res, next) => {
   });
 
   updatedOrg.save();
+
+  if (!req.organization.RNC && req.body.RNC) {
+    updatedOrg.verifyRNCWithDGII();
+  }
 
   res.status(200).json({
     status: 'success',
@@ -130,7 +142,7 @@ exports.addOrganizationMember = catchAsync(async (req, res, next) => {
     status: 'success',
     token: res.token,
     data: {
-      user: req.user,   
+      user: req.user,
     },
   });
 });
@@ -244,33 +256,37 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
     });
   }
   if (!orgUserEmail.includes(req.body.invitation.email)) {
-    let encryptedEmail = crypto
-      .createHash('sha256')
-      .update(req.body.invitation.email)
-      .digest('hex');
-
     await MemberInvitation.deleteOne({
       organization: req.organization.id,
-      email: encryptedEmail,
+      email: req.body.invitation.email,
     });
+    const user = await User.find({email: req.body.invitation.email});
+    if(user){
+      return next(
+        new AppError(
+          `Ya existe una cuenta con el correo ${req.body.invitation.email}. Por favor, ingrese uno distinto.`,
+          400
+        )
+      );
+    }
     const invitationToken = crypto.randomBytes(32).toString('hex'); // create
-
+    
     await MemberInvitation.create({
       organization: req.organization.id,
       email: req.body.invitation.email, // this can fail, mongoose error
       token: invitationToken,
       invitedRole: req.body.invitation.role, //This can fail, mongoose error
     });
+    const invitationUrl = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
+    const orgOptions = {
+      name: req.organization.name,
+      profilePicture: req.organization.profilePicture,
+    };
 
-    const invitationLink = `${getClientHost(req)}/addMember/${invitationToken}`; // this will change
-
-    let message = `Has sido invitado a ${req.organization.name} en WorKn, si deseas unirte accede a ${invitationLink}, de lo contrario, por favor, ignore este correo.`;
     try {
-      await sendEmail({
-        email: req.body.invitation.email,
-        subject: `Fuiste invitado a ${req.organization.name} en WorKn`,
-        message,
-      });
+      await new Email(req.body.invitation.email, invitationUrl).sendMemberInvitation(
+        orgOptions
+      );
     } catch (error) {
       return next(
         new AppError(
@@ -283,7 +299,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Invitation sent',
+    message: 'Invitación enviada satisfactoriamente.',
   });
 });
 

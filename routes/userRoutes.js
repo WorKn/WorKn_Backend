@@ -6,6 +6,7 @@ const {
   resetPassword,
   protect,
   updateMyPassword,
+  restricTo,
   logout,
   validateEmail,
   googleAuth
@@ -22,9 +23,17 @@ const {
   uploadPhotoToCloudinary,
 } = require('./../controllers/photoUploadController');
 
+const chatRouter = require('./chatRoutes');
+const reviewRouter = require('./reviewRoutes');
+
 const router = express.Router();
 
+router.use('/:userId/reviews', reviewRouter);
+
 //Routes
+
+router.use('/me/chats', chatRouter);
+
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/login/google', googleAuth);

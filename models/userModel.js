@@ -2,10 +2,11 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const sendEmail = require('./../utils/email');
 const getClientHost = require('../utils/getClientHost');
+const AppError = require('./../utils/appError');
+const Email = require('../utils/email');
 
-const locationSchema = require('../schemas/locationSchema');
+// const locationSchema = require('../schemas/locationSchema');
 const tagSchema = require('../schemas/sharedTagSchema');
 
 const userSchema = new mongoose.Schema(
@@ -25,6 +26,8 @@ const userSchema = new mongoose.Schema(
     identificationNumber: {
       type: String,
       select: false,
+      unique: true,
+      sparse: true,
       validate: [
         {
           validator: validator.isNumeric,
@@ -75,8 +78,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
+    // location: {
+    //   type: locationSchema,
+    //   select: false,
+    // },
     location: {
-      type: locationSchema,
+      type: String,
+      maxlength: 3000,
       select: false,
     },
     password: {
@@ -209,7 +217,12 @@ userSchema.pre('save', function (next) {
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
-
+userSchema.post('save', function(error, doc, next) {
+  if (error.code === 11000 && error.keyPattern.email){
+    next( new AppError(`Ya existe una cuenta con el correo ${this.email}. Por favor, ingrese uno distinto.`, 400));
+  }
+  next(error)  
+}); 
 userSchema.methods.verifyPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
@@ -254,22 +267,19 @@ userSchema.methods.sendValidationEmail = async function (req) {
   validationToken = this.generateToken('email');
   const validationURL = `${getClientHost(req)}/emailvalidation/${validationToken}`;
 
-  const message = `Para validar su email, por favor, haga clic en el siguiente enlace: ${validationURL}\n
-  Si no ha se ha registrado en la plataforma, por favor ignore este mensaje.`;
-
   try {
-    sendEmail({
-      email: this.email,
-      subject: 'Validación de email',
-      message,
-    });
+    await new Email(this.email, validationURL).sendEmailValidation();
   } catch (err) {
-    user.cleanTokensArray('email');
-
-    await this.save({ validateBeforeSave: false });
-
     console.log(err);
+    this.cleanTokensArray('email');
   }
+};
+
+userSchema.methods.sendPasswordResetEmail = async function (req) {
+  const resetToken = this.generateToken('password');
+  const resetURL = `${getClientHost(req)}/resetPassword/${resetToken}`;
+
+  await new Email(this.email, resetURL).sendPasswordReset();
 };
 
 userSchema.methods.cleanTokensArray = async function (tokenType) {
