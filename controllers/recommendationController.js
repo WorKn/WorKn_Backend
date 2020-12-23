@@ -10,7 +10,7 @@ exports.getOfferRecommendation = catchAsync(async (req, res, next) => {
       new AppError('Lo sentimos,pero solo podemos recomendar ofertas a un aplicante', 403)
     );
   }
-  const fieldsToShow = '_id name email profilePicture';
+  const fieldsToShow = '_id name lastname email profilePicture';
   tags = await TagOffer.find({ tag: { $in: req.user.tags } })
     .populate({
       path: 'offer',
