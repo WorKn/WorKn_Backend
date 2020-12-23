@@ -260,7 +260,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       organization: req.organization.id,
       email: req.body.invitation.email,
     });
-    const user = await User.find({email: req.body.invitation.email});
+    const user = await User.findOne({email: req.body.invitation.email});
     if(user){
       return next(
         new AppError(
