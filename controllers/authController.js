@@ -165,10 +165,15 @@ exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
 
 getGoogleAuthInformation = async (code) => {
   try {
+    let redirect_uri =
+      process.NODE_ENV === 'staging'
+        ? process.env.GOOGLE_AUTH_STAGING_REDIRECT_URI
+        : process.env.GOOGLE_AUTH_LOCAL_REDIRECT_URI;
+
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_AUTH_CLIENT_ID,
       process.env.GOOGLE_AUTH_CLIENT_SECRET,
-      process.env.GOOGLE_AUTH_REDIRECT_URI
+      redirect_uri
     );
 
     //Get user's Google tokens
