@@ -113,8 +113,6 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
     createSendToken(user, 200, res);
   } else {
-    //googleSignup
-
     res.status(200).json({
       status: 'success',
       data: {
@@ -128,39 +126,6 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
       },
     });
   }
-});
-
-exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
-  if (!req.query.code) {
-    return next(new AppError('Proporcione un código de autenticación de Google.', 400));
-  }
-
-  // const payload = await getGoogleAuthInformation(req.query.code, req.query.redirect_uri);
-
-  if (!payload) return next(new AppError('Internal server error.', 500));
-
-  const { email, given_name, family_name, picture } = payload;
-  const user = await User.findOne({ email });
-  let responseData;
-
-  if (user) {
-    responseData = {
-      isUserRegistered: true,
-    };
-  } else {
-    responseData = {
-      isUserRegistered: false,
-      name: given_name,
-      lastname: family_name,
-      email,
-      profilePicture: picture,
-    };
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: responseData,
-  });
 });
 
 getGoogleAuthInformation = async (code) => {

@@ -37,7 +37,6 @@ router.use('/me/chats', chatRouter);
 
 router.post('/signup', signup);
 router.post('/login', login);
-router.get('/googleAuth/validate', validateUserGoogleAuthRegister);
 router.post('/googleAuth', googleAuth);
 router.get('/logout', logout);
 
