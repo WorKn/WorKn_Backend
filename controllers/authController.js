@@ -56,6 +56,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     userType: req.body.userType,
     organizationRole: req.body.organizationRole,
     organization: req.body.organization,
+    signUpMethod: req.body.signUpMethod,
   });
 
   newUser.sendValidationEmail(req);
@@ -88,26 +89,41 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   }
 
   const payload = await getGoogleAuthInformation(req.body.code);
+  if (!payload) return next(new AppError('Internal server error.', 500));
 
-  if (!payload) return; //error
+  const { email, given_name, family_name, picture, sub } = payload;
+  const user = await User.findOne({ email }).select(
+    '+password +location +phone +identificationNumber'
+  );
 
-  const user = await User.findOne({ email: payload.email });
-
-  if (!user) {
-    //googleSignup
-  } else {
+  if (user) {
+    //googleSignIn
     if (user.signUpMethod != 'google') {
       return next(
         new AppError('Usuario ya registrado utilizando otro método de autenticación.', 401)
       );
     }
 
-    //googleSignIn
-  }
+    if (await user.verifyPassword(sub, user.password)) {
+      return next(new AppError('Email o contraseña incorrecta', 401));
+    }
 
-  res.status(200).json({
-    status: 'success',
-  });
+    createSendToken(user, 200, res);
+  } else {
+    //googleSignup
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        isUserRegistered: false,
+        name: given_name,
+        lastname: family_name,
+        email,
+        sub,
+        profilePicture: picture,
+      },
+    });
+  }
 });
 
 exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
