@@ -104,7 +104,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
       );
     }
 
-    if (await user.verifyPassword(sub, user.password)) {
+    if (!(await user.verifyPassword(sub, user.password))) {
       return next(new AppError('Email o contraseña incorrecta', 401));
     }
 
