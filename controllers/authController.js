@@ -131,7 +131,7 @@ exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
     return next(new AppError('Proporcione un código de autenticación de Google.', 400));
   }
 
-  const payload = await getGoogleAuthInformation(req.query.code, req.query.redirect_uri);
+  // const payload = await getGoogleAuthInformation(req.query.code, req.query.redirect_uri);
 
   if (!payload) return next(new AppError('Internal server error.', 500));
 
@@ -159,13 +159,12 @@ exports.validateUserGoogleAuthRegister = catchAsync(async (req, res, next) => {
   });
 });
 
-getGoogleAuthInformation = async (code, redirect_uri) => {
+getGoogleAuthInformation = async (code) => {
   try {
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_AUTH_CLIENT_ID,
       process.env.GOOGLE_AUTH_CLIENT_SECRET,
-      redirect_uri
-      // process.env.GOOGLE_AUTH_REDIRECT_URI
+      process.env.GOOGLE_AUTH_REDIRECT_URI
     );
 
     //Get user's Google tokens
