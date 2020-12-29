@@ -57,6 +57,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     organizationRole: req.body.organizationRole,
     organization: req.body.organization,
     signUpMethod: req.body.signUpMethod,
+    profilePicture: req.body.profilePicture,
   });
 
   newUser.sendValidationEmail(req);
