@@ -61,7 +61,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     isEmailValidated: req.body.isEmailValidated,
   });
 
-  if (req.body.isEmailValidated) newUser.sendValidationEmail(req);
+  if (!req.body.isEmailValidated) newUser.sendValidationEmail(req);
 
   await newUser.save({ validateBeforeSave: false });
 
