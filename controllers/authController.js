@@ -58,9 +58,11 @@ exports.signup = catchAsync(async (req, res, next) => {
     organization: req.body.organization,
     signUpMethod: req.body.signUpMethod,
     profilePicture: req.body.profilePicture,
+    isEmailValidated: req.body.isEmailValidated,
   });
 
-  newUser.sendValidationEmail(req);
+  if (req.body.isEmailValidated) newUser.sendValidationEmail(req);
+
   await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
@@ -92,7 +94,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   const payload = await getGoogleAuthInformation(req.body.code);
   if (!payload) return next(new AppError('Internal server error.', 500));
 
-  const { email, given_name, family_name, picture, sub } = payload;
+  const { email, given_name, family_name, picture, sub, email_verified } = payload;
   const user = await User.findOne({ email }).select(
     '+password +location +phone +identificationNumber'
   );
@@ -121,6 +123,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
         lastname: family_name,
         email,
         sub,
+        isEmailValidated: email_verified,
         profilePicture: picture,
       },
     });
