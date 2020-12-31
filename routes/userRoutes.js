@@ -10,7 +10,6 @@ const {
   logout,
   validateEmail,
   googleAuth,
-  validateUserGoogleAuthRegister,
 } = require('./../controllers/authController');
 const {
   getUsersHandler,
