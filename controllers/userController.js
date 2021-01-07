@@ -8,19 +8,16 @@ const User = require('./../models/userModel');
 const Tag = require('./../models/tagModel');
 const TagUser = require('./../models/tagUserModel');
 
-
 exports.getAllUsers = factory.getAll(User);
 
-const getUsersWithTags = async (req,res) =>{
+const getUsersWithTags = async (req, res) => {
   tags = await TagUser.find({ tag: { $in: req.query.tags } })
     .populate({
       path: 'user',
       select: '-__v -isEmailValidated',
-      populate: [
-        { path: 'tags', select: '-__v' },
-      ],
+      populate: [{ path: 'tags', select: '-__v' }],
     })
-  .select('-__v')
+    .select('-__v');
 
   const users = new Set();
 
@@ -38,8 +35,8 @@ const getUsersWithTags = async (req,res) =>{
 
 exports.getUser = factory.getOne(User);
 
-exports.getUsersHandler = catchAsync(async(req,res,next)=>{
-  req.query.tags? getUsersWithTags(req,res) : this.getAllUsers(req,res,next);
+exports.getUsersHandler = catchAsync(async (req, res, next) => {
+  req.query.tags ? getUsersWithTags(req, res) : this.getAllUsers(req, res, next);
 });
 
 exports.getMe = catchAsync(async (req, res, next) => {
@@ -78,6 +75,7 @@ exports.updateMyProfile = catchAsync(async (req, res, next) => {
   let updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,
     runValidators: true,
+    select: '+phone +identificationNumber +location',
   });
 
   updatedUser.save({ validateBeforeSave: false });

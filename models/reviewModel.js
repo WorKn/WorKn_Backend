@@ -34,11 +34,12 @@ const reviewSchema = new mongoose.Schema(
 
 //Query Middlewares
 
-//This function populates the 'from' field everytime any 'find' operation gets executed.
+//This function populates the 'createdBy' field everytime any 'find' operation gets executed.
 reviewSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'createdBy',
-    select: '_id name lastname profilePicture',
+    select: '_id name lastname profilePicture organization',
+    populate: [{ path: 'organization', select: '_id name email profilePicture' }],
   });
 
   next();
