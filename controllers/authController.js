@@ -91,7 +91,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
     return next(new AppError('Proporcione un código de autenticación de Google.', 400));
   }
 
-  const payload = await getGoogleAuthInformation(req.body.code);
+  const payload = await getGoogleAuthInformation(req.body.code, req.body.redirect_uri);
   if (!payload) return next(new AppError('Internal server error.', 500));
 
   const { email, given_name, family_name, picture, sub, email_verified } = payload;
@@ -128,13 +128,8 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   }
 });
 
-getGoogleAuthInformation = async (code) => {
+getGoogleAuthInformation = async (code, redirect_uri) => {
   try {
-    let redirect_uri =
-      process.NODE_ENV === 'staging'
-        ? process.env.GOOGLE_AUTH_STAGING_REDIRECT_URI
-        : process.env.GOOGLE_AUTH_LOCAL_REDIRECT_URI;
-
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_AUTH_CLIENT_ID,
       process.env.GOOGLE_AUTH_CLIENT_SECRET,
