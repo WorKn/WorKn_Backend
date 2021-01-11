@@ -8,6 +8,7 @@ const userRouter = require('./routes/userRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const offerRouter = require('./routes/offerRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
+const tagRouter = require('./routes/tagRoutes');
 const recommendationRouter = require('./routes/recommendationRoutes');
 const statRouter = require('./routes/statRoutes');
 
@@ -41,6 +42,7 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/offers', offerRouter);
 app.use('/api/v1/categories', categoryRouter);
+app.use('/api/v1/tags', tagRouter);
 app.use('/api/v1/recommendations', recommendationRouter);
 app.use('/api/v1/stats', statRouter);
 
