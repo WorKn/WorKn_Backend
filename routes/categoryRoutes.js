@@ -8,6 +8,6 @@ const router = express.Router();
 
 router.get('/', getAllCategories);
 router.post('/', createCategory);
-router.get('/:categoryName/tags', getCategoriesTag);
+router.get('/:categoryId/tags', getCategoriesTag);
 
 module.exports = router;
