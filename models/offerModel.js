@@ -10,7 +10,12 @@ const offerSchema = mongoose.Schema({
   },
   description: {
     type: String,
-    maxlength: 3000,
+    validate: {
+      validator: function (el) {
+        return el.length < 5000;
+      },
+      message: `Por favor, ingrese una descripción que posea menos de 5000 caracteres.`,
+    },
     required: [true, 'Por favor, proporcione una descripción a su oferta.'],
   },
   offerType: {
