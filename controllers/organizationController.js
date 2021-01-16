@@ -260,8 +260,8 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       organization: req.organization.id,
       email: req.body.invitation.email,
     });
-    const user = await User.find({email: req.body.invitation.email});
-    if(user){
+    const user = await User.findOne({ email: req.body.invitation.email });
+    if (user) {
       return next(
         new AppError(
           `Ya existe una cuenta con el correo ${req.body.invitation.email}. Por favor, ingrese uno distinto.`,
@@ -270,7 +270,7 @@ exports.sendInvitationEmail = catchAsync(async (req, res, next) => {
       );
     }
     const invitationToken = crypto.randomBytes(32).toString('hex'); // create
-    
+
     await MemberInvitation.create({
       organization: req.organization.id,
       email: req.body.invitation.email, // this can fail, mongoose error
@@ -354,10 +354,10 @@ exports.signupOrganizationMember = catchAsync(async (req, res, next) => {
       organization: req.organization.id,
     });
 
-    await newUser.save({ validateBeforeSave: false });
-    createSendToken(newUser, res);
-
     newUser.sendValidationEmail(req);
+    await newUser.save({ validateBeforeSave: false });
+
+    createSendToken(newUser, res);
 
     req.user = newUser;
     next();

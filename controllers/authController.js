@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 
 const User = require('./../models/userModel');
 
@@ -55,9 +56,13 @@ exports.signup = catchAsync(async (req, res, next) => {
     userType: req.body.userType,
     organizationRole: req.body.organizationRole,
     organization: req.body.organization,
+    signUpMethod: req.body.signUpMethod,
+    profilePicture: req.body.profilePicture,
+    isEmailValidated: req.body.isEmailValidated,
   });
 
-  newUser.sendValidationEmail(req);
+  if (!req.body.isEmailValidated) newUser.sendValidationEmail(req);
+
   await newUser.save({ validateBeforeSave: false });
 
   createSendToken(newUser, 201, res);
@@ -80,6 +85,74 @@ exports.login = catchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+exports.googleAuth = catchAsync(async (req, res, next) => {
+  if (!req.body.code) {
+    return next(new AppError('Proporcione un código de autenticación de Google.', 400));
+  }
+
+  const payload = await getGoogleAuthInformation(req.body.code, req.body.redirect_uri);
+  if (!payload) return next(new AppError('Internal server error.', 500));
+
+  const { email, given_name, family_name, picture, sub, email_verified } = payload;
+  const user = await User.findOne({ email }).select(
+    '+password +location +phone +identificationNumber'
+  );
+
+  if (user) {
+    //googleSignIn
+    if (user.signUpMethod != 'google') {
+      return next(
+        new AppError('Usuario ya registrado utilizando otro método de autenticación.', 401)
+      );
+    }
+
+    if (!(await user.verifyPassword(sub, user.password))) {
+      return next(new AppError('Email o contraseña incorrecta', 401));
+    }
+
+    createSendToken(user, 200, res);
+  } else {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        isUserRegistered: false,
+        name: given_name,
+        lastname: family_name,
+        email,
+        sub,
+        isEmailValidated: email_verified,
+        profilePicture: picture,
+      },
+    });
+  }
+});
+
+getGoogleAuthInformation = async (code, redirect_uri) => {
+  try {
+    const oAuth2Client = new OAuth2Client(
+      process.env.GOOGLE_AUTH_CLIENT_ID,
+      process.env.GOOGLE_AUTH_CLIENT_SECRET,
+      redirect_uri
+    );
+
+    //Get user's Google tokens
+    const { tokens } = await oAuth2Client.getToken(code);
+
+    //Decode user's Google id_token
+    const decodedIdToken = await oAuth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_AUTH_CLIENT_ID,
+    });
+
+    const payload = decodedIdToken.getPayload();
+
+    return payload;
+  } catch (err) {
+    console.log(err.response.data.error);
+    return undefined;
+  }
+};
 
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {

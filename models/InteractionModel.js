@@ -9,6 +9,10 @@ const interactionSchema = new mongoose.Schema({
   rejected: {
     type: Boolean,
   },
+  isOfferClosed: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now(),

@@ -9,6 +9,7 @@ const {
   restricTo,
   logout,
   validateEmail,
+  googleAuth,
 } = require('./../controllers/authController');
 const {
   getUsersHandler,
@@ -35,6 +36,7 @@ router.use('/me/chats', chatRouter);
 
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/googleAuth', googleAuth);
 router.get('/logout', logout);
 
 router.post('/forgotPassword', forgotPassword);

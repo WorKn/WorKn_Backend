@@ -79,6 +79,18 @@ exports.getReviewValidation = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getAllReviews = catchAsync(async (req, res, next) => {
+  const reviews = await Review.find({ userReviewed: req.params.userId });
+
+  res.status(200).json({
+    status: 'success',
+    results: reviews.length,
+    data: {
+      data: reviews,
+    },
+  });
+});
+
 const getMatchedInteractions = async (userToBeReviewed, currentUser) => {
   let interactions = [];
 
@@ -113,7 +125,6 @@ const areAllOffersNull = (interactions) => {
   return output;
 };
 
-exports.getAllReviews = factory.getAll(Review);
 exports.getReview = factory.getOne(Review);
 
 exports.createReview = factory.createOne(Review);

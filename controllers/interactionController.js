@@ -47,6 +47,7 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
   const interaction = await Interaction.findOne({
     offer: req.body.offer,
     applicant: interactionApplicant,
+    state: { $ne: 'deleted' },
   });
 
   if (interaction) {
@@ -54,14 +55,14 @@ exports.createInteraction = catchAsync(async (req, res, next) => {
       new AppError('Usted ya tiene una interacción con esta oferta, por favor, verifique', 400)
     );
   }
-  
+
   const newInteraction = await Interaction.create({
     state: interactionState,
     offer: req.body.offer,
     applicant: interactionApplicant,
     offerer: interactionOfferer,
   });
-  
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -264,10 +265,13 @@ exports.cancelInteraction = catchAsync(async (req, res, next) => {
 exports.getMyInteractions = catchAsync(async (req, res, nect) => {
   let interactions = [];
   let parsedInteractions = {};
-  const fieldsToShow = '_id name email profilePicture';
+  const fieldsToShow = '_id name lastname email profilePicture';
 
   if (req.user.userType == 'applicant') {
-    interactions = await Interaction.find({ applicant: req.user.id })
+    interactions = await Interaction.find({
+      applicant: req.user.id,
+      isOfferClosed: { $ne: true },
+    })
       .populate({
         path: 'offer',
         select: '-__v',
